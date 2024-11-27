@@ -27,7 +27,7 @@ public class TestController {
         List<Edge> e = new ArrayList<>();
         e.add(e2);
         e.add(e1);
-        Flow flow = Flow.builder().id(1L).edges(e).build();
+        Flow flow = Flow.builder().edges(e).build();
         flowRepo.save(flow);
         return new String("ok");
     }

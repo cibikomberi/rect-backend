@@ -28,7 +28,7 @@ public class Device {
     private Boolean isUpToDate;
     private LocalDateTime lastActiveTime;
 
-    private Long flowId;
+    private String flowId;
     @Column(unique = true)
     private String apiKey;
 }

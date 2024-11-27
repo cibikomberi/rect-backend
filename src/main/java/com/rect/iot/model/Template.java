@@ -21,7 +21,7 @@ public class Template {
     private String name;
 
     private String board;
-    private Long flowId;
+    private String flowId;
 
     
 }

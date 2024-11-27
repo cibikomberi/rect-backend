@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 import com.rect.iot.model.Flow;
 
 @Repository
-public interface FlowRepo extends MongoRepository<Flow, Long>{
+public interface FlowRepo extends MongoRepository<Flow, String>{
     
 }

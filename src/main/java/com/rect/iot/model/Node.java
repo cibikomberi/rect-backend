@@ -1,6 +1,8 @@
 package com.rect.iot.model;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -10,9 +12,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Node {
+
+    @JsonProperty("id")
     private String id;
     private NodePosition position;
     private String type;
     private NodeMeasured measured;
-    private ObjectNode data;
+    private Map<String, String> data;
 }

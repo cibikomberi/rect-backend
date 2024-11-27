@@ -15,7 +15,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @Document("Flows")
 public class Flow {
-    private Long id;
+    
+    private String id;
 
     private List<Node> nodes;
     private List<Edge> edges;
