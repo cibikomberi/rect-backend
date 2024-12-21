@@ -22,15 +22,6 @@ public class TemplateMetadata {
     private List<AccessControl> accessControls;
 }
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-class Datastream {
-    private String identifier;
-    private String name;
-    private String type;
-    private String unit;
-}
 
 @Data
 @AllArgsConstructor

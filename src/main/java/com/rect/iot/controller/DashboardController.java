@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 
 
+
 @RestController
 @CrossOrigin
 public class DashboardController {
@@ -31,6 +32,12 @@ public class DashboardController {
     public DashboardData getDashboardData(@PathVariable String id) {
         return dashboardService.getDashboardData(id);
     }
+
+    // @GetMapping("/dashboard/data")
+    // public String serveDashboard(@RequestParam String param) {
+    //     return new String();
+    // }
+    
     
     
 }
