@@ -5,10 +5,16 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestPart;
 
+import com.rect.iot.model.Device;
+import com.rect.iot.model.DeviceMetadata;
 import com.rect.iot.model.Flow;
 import com.rect.iot.model.Template;
+import com.rect.iot.model.TemplateMetadata;
 import com.rect.iot.repository.FlowRepo;
+import com.rect.iot.repository.TemplateMetadataRepo;
 import com.rect.iot.repository.TemplateRepo;
 
 
@@ -19,16 +25,50 @@ public class TemplateService {
     @Autowired
     private TemplateRepo templateRepo;
     @Autowired
+    private TemplateMetadataRepo templateMetadataRepo;
+    @Autowired
     private FlowRepo flowRepo;
 
+    public Template getTemplateInfo(Long templateId) {
+        return templateRepo.findById(templateId).get();
+    }
+    
     public List<Template> getTemplates(Long id) {
         return templateRepo.findAll();
     }
 
-    public Template createTemplate(Long id, String name, String board) {
+    public Template updateTemplateInfo(@PathVariable Long id, @RequestPart Device newInfo, @RequestPart DeviceMetadata newMetadata) {
+        Template template = templateRepo.findById(id).get();
+        TemplateMetadata metadata = templateMetadataRepo.findById(template.getMetadataId()).get();
+
+        template.setName(newInfo.getName());
+        template.setDescription(newInfo.getDescription());
+
+        metadata.setDatastreams(newMetadata.getDatastreams());
+        metadata.setAccessControls(newMetadata.getAccessControls());
+
+        templateMetadataRepo.save(metadata);
+
+        return templateRepo.save(template);
+    }
+
+    public TemplateMetadata getTemplateMetadata(Long id){
+        return templateMetadataRepo.findById(templateRepo
+                    .findById(id)
+                    .get()
+                    .getMetadataId())
+                .get();
+    }
+
+    public Template createTemplate(String name, String board) {
+        TemplateMetadata metadata = templateMetadataRepo.save(TemplateMetadata.builder()
+                .datastreams(new ArrayList<>())
+                .accessControls(new ArrayList<>())
+                .build());
         return templateRepo.save(Template.builder()
                 .board(board)
                 .name(name)
+                .metadataId(metadata.getId())
                 .build());
     }
 

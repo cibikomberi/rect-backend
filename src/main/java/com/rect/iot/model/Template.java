@@ -1,5 +1,7 @@
 package com.rect.iot.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -21,7 +23,10 @@ public class Template {
     private String name;
 
     private String board;
-    private String flowId;
+    private String description;
 
-    
+    @JsonIgnore
+    private String flowId;
+    @JsonIgnore
+    private String metadataId;
 }
