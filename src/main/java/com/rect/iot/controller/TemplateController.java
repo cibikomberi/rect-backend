@@ -3,11 +3,9 @@ package com.rect.iot.controller;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.rect.iot.model.Device;
-import com.rect.iot.model.DeviceMetadata;
-import com.rect.iot.model.Flow;
 import com.rect.iot.model.Template;
-import com.rect.iot.model.TemplateMetadata;
+import com.rect.iot.model.node.Flow;
+import com.rect.iot.model.template.TemplateMetadata;
 import com.rect.iot.service.TemplateService;
 
 import java.util.List;
@@ -48,7 +46,7 @@ public class TemplateController {
     }
 
     @PutMapping("template/{id}")
-    public Template updateTemplateInfo(@PathVariable Long id, @RequestPart Device info, @RequestPart DeviceMetadata metadata) {
+    public Template updateTemplateInfo(@PathVariable Long id, @RequestPart Template info, @RequestPart TemplateMetadata metadata) {
         System.out.println(id);
         System.out.println(info);
         System.out.println(metadata);

@@ -10,9 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.rect.iot.model.Datastream;
-import com.rect.iot.model.Device;
-import com.rect.iot.model.DeviceMetadata;
 import com.rect.iot.model.ThingData;
+import com.rect.iot.model.device.Device;
+import com.rect.iot.model.device.DeviceMetadata;
 import com.rect.iot.repository.DeviceMetadataRepo;
 import com.rect.iot.repository.DeviceRepo;
 import com.rect.iot.repository.ThingDataRepo;

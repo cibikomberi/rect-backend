@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document
-public class ThingData<T> {
+public class  ThingData<T> {
     private String id;
     private Long deviceId;
     private String datastreamId;

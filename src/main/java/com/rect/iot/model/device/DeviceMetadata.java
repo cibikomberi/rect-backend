@@ -1,8 +1,11 @@
-package com.rect.iot.model;
+package com.rect.iot.model.device;
 
 import java.util.List;
 
+import org.springframework.aot.generate.AccessControl;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.rect.iot.model.Datastream;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,11 +16,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Document("Flows")
-public class Flow {
-    
+@Document
+public class DeviceMetadata {
     private String id;
 
-    private List<Node> nodes;
-    private List<Edge> edges;
+    private List<Datastream> datastreams;
+    private List<AccessControl> accessControls;
 }

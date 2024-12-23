@@ -2,7 +2,7 @@ package com.rect.iot.controller;
 
 import org.springframework.web.bind.annotation.RestController;
 
-import com.rect.iot.model.DashboardData;
+import com.rect.iot.model.widget.DashboardData;
 import com.rect.iot.service.DashboardService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,6 @@ public class DashboardController {
 
     @PostMapping("/dashboard/{deviceId}")
     public DashboardData saveDashboardData(@PathVariable Long deviceId, @RequestBody DashboardData data) {
-        System.out.println(data);
         return dashboardService.saveDashboardData(deviceId, data);
     }
 

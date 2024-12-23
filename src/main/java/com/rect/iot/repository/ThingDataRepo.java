@@ -10,4 +10,6 @@ import com.rect.iot.model.ThingData;
 @Repository
 public interface ThingDataRepo extends MongoRepository<ThingData<?>, String> {
     List<ThingData<?>> findByDeviceIdAndDatastreamId(Long deviceId, String datastreamId);
+
+    ThingData<?> findFirstByDeviceIdAndDatastreamIdOrderByDateTimeDesc(Long deviceId, String datastreamId);
 }

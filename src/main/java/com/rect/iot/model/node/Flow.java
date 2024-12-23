@@ -1,4 +1,4 @@
-package com.rect.iot.model;
+package com.rect.iot.model.node;
 
 import java.util.List;
 
@@ -13,10 +13,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Document
-public class DeviceMetadata {
+@Document("Flows")
+public class Flow {
+    
     private String id;
 
-    private List<Datastream> datastreams;
-    private List<AccessControl> accessControls;
+    private List<Node> nodes;
+    private List<Edge> edges;
 }

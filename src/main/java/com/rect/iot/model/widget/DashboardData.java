@@ -1,7 +1,7 @@
-package com.rect.iot.model;
+package com.rect.iot.model.widget;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -22,7 +22,7 @@ public class DashboardData {
     @Id
     String id;
     List<Layout> layout;
-    HashMap<String, ?> widgetData;
+    Map<String, Widget> widgetData;
 }
 
 
@@ -42,6 +42,3 @@ class Layout {
     @JsonProperty("static")
     Boolean isStatic;
 }
-// class WidgetData {
-//     JsonNode data;
-// }

@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.rect.iot.model.Device;
-import com.rect.iot.model.DeviceMetadata;
-import com.rect.iot.model.Flow;
+import com.rect.iot.model.device.Device;
+import com.rect.iot.model.device.DeviceMetadata;
+import com.rect.iot.model.node.Flow;
 import com.rect.iot.service.DeviceService;
 import org.springframework.web.bind.annotation.PutMapping;
 

@@ -9,10 +9,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestPart;
 
-import com.rect.iot.model.Device;
-import com.rect.iot.model.DeviceMetadata;
-import com.rect.iot.model.Flow;
 import com.rect.iot.model.Template;
+import com.rect.iot.model.device.Device;
+import com.rect.iot.model.device.DeviceMetadata;
+import com.rect.iot.model.node.Flow;
 import com.rect.iot.repository.DeviceMetadataRepo;
 import com.rect.iot.repository.DeviceRepo;
 import com.rect.iot.repository.FlowRepo;

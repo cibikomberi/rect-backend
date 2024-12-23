@@ -3,8 +3,8 @@ package com.rect.iot.controller;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.rect.iot.model.Edge;
-import com.rect.iot.model.Flow;
+import com.rect.iot.model.node.Edge;
+import com.rect.iot.model.node.Flow;
 import com.rect.iot.repository.FlowRepo;
 import com.rect.iot.service.compile.ArduinoHeaderParser;
 

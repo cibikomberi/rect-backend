@@ -8,11 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestPart;
 
-import com.rect.iot.model.Device;
-import com.rect.iot.model.DeviceMetadata;
-import com.rect.iot.model.Flow;
 import com.rect.iot.model.Template;
-import com.rect.iot.model.TemplateMetadata;
+import com.rect.iot.model.node.Flow;
+import com.rect.iot.model.template.TemplateMetadata;
 import com.rect.iot.repository.FlowRepo;
 import com.rect.iot.repository.TemplateMetadataRepo;
 import com.rect.iot.repository.TemplateRepo;
@@ -37,7 +35,7 @@ public class TemplateService {
         return templateRepo.findAll();
     }
 
-    public Template updateTemplateInfo(@PathVariable Long id, @RequestPart Device newInfo, @RequestPart DeviceMetadata newMetadata) {
+    public Template updateTemplateInfo(@PathVariable Long id, @RequestPart Template newInfo, @RequestPart TemplateMetadata newMetadata) {
         Template template = templateRepo.findById(id).get();
         TemplateMetadata metadata = templateMetadataRepo.findById(template.getMetadataId()).get();
 

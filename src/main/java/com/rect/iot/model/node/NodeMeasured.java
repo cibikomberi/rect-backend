@@ -1,4 +1,4 @@
-package com.rect.iot.model;
+package com.rect.iot.model.node;
 
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;

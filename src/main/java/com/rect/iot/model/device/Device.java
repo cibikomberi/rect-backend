@@ -1,8 +1,9 @@
-package com.rect.iot.model;
+package com.rect.iot.model.device;
 
 import java.time.LocalDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.rect.iot.model.Template;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

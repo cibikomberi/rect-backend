@@ -1,4 +1,4 @@
-package com.rect.iot.model;
+package com.rect.iot.model.node;
 
 import lombok.Data;
 import lombok.AllArgsConstructor;
