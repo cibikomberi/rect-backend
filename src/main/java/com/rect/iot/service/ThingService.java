@@ -2,17 +2,20 @@ package com.rect.iot.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.rect.iot.model.Datastream;
 import com.rect.iot.model.ThingData;
 import com.rect.iot.model.device.Device;
 import com.rect.iot.model.device.DeviceMetadata;
+import com.rect.iot.model.dto.ChartDataDTO;
 import com.rect.iot.repository.DeviceMetadataRepo;
 import com.rect.iot.repository.DeviceRepo;
 import com.rect.iot.repository.ThingDataRepo;
@@ -25,6 +28,8 @@ public class ThingService {
     private DeviceRepo deviceRepo;
     @Autowired
     private DeviceMetadataRepo deviceMetadataRepo;
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     public List<String> logData(Long deviceId, Map<String, ?> dataMap) {
         Device device = deviceRepo.findById(deviceId).get();
@@ -36,7 +41,8 @@ public class ThingService {
         List<String> invalidKeys = null;
 
         for (Map.Entry<String, ?> set : dataMap.entrySet()) {
-            List<Datastream> filteredDatastreams = datastreams.stream().filter(datastream -> datastream.getIdentifier().equals(set.getKey())).collect(Collectors.toList());
+            List<Datastream> filteredDatastreams = datastreams.stream()
+                    .filter(datastream -> datastream.getIdentifier().equals(set.getKey())).collect(Collectors.toList());
             if (filteredDatastreams.size() > 0) {
                 Object data;
                 try {
@@ -54,12 +60,17 @@ public class ThingService {
                     invalidKeys.add(set.getKey());
                     continue;
                 }
-                thingDataRepo.save(ThingData.builder()
+                ThingData<?> savedData = thingDataRepo.save(ThingData.builder()
                         .datastreamId(set.getKey())
                         .deviceId(deviceId)
-                        .data(data)
+                        .value(data)
                         .dateTime(LocalDateTime.now())
                         .build());
+
+                Map<String, Object> a = new HashMap<>();
+                a.put("type", "update");
+                a.put("data", ChartDataDTO.builder().value(data).dateTime(savedData.getDateTime()).build());
+                messagingTemplate.convertAndSend("/topic/data/" + deviceId + "/" + set.getKey(), a);
             } else {
                 if (invalidKeys == null) {
                     invalidKeys = new ArrayList<>();
@@ -67,6 +78,6 @@ public class ThingService {
                 invalidKeys.add(set.getKey());
             }
         }
-        return invalidKeys;  
+        return invalidKeys;
     }
 }

@@ -51,9 +51,9 @@ public class DeviceController {
         return deviceService.updateDeviceInfo(id, info, metadata);
     }
 
-    @GetMapping("/device/metadata/{templateId}")
-    public DeviceMetadata getDeviceMetadata(@PathVariable Long templateId){
-        return deviceService.getDeviceMetadata(templateId);
+    @GetMapping("/device/metadata/{deviceId}")
+    public DeviceMetadata getDeviceMetadata(@PathVariable Long deviceId){
+        return deviceService.getDeviceMetadata(deviceId);
     }
 
     @PostMapping("/flow/{id}/save")

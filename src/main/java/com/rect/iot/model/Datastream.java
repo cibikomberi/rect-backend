@@ -1,5 +1,6 @@
 package com.rect.iot.model;
 
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,6 +11,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Datastream {
+    private Long deviceId;
+
+    @Transient
+    private String deviceName;
+    
     private String identifier;
     private String name;
     private String type;
@@ -39,6 +45,4 @@ public class Datastream {
         result = prime * result + ((identifier == null) ? 0 : identifier.hashCode());
         return result;
     }
-
-   
 }

@@ -12,7 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ChartDataDTO {
-    private String group;
     private LocalDateTime dateTime;
     private Object value;
 }
