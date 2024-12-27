@@ -30,10 +30,12 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChani(HttpSecurity http) throws Exception {
         http.csrf(customizer -> customizer.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .httpBasic(Customizer.withDefaults())
+            // .formLogin(Customizer.withDefaults())
+            // .httpBasic(Customizer.withDefaults())
             .authorizeHttpRequests(request -> request
                 .requestMatchers("/login", "/register").permitAll()
                 .anyRequest().authenticated())
+            .oauth2Login(Customizer.withDefaults())
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
