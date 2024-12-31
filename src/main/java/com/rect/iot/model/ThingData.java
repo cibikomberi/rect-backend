@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Document
 public class  ThingData<T> {
     private String id;
-    private Long deviceId;
+    private String deviceId;
     private String datastreamId;
     private T value;
     private LocalDateTime dateTime;

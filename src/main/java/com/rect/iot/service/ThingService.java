@@ -31,7 +31,7 @@ public class ThingService {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    public List<String> logData(Long deviceId, Map<String, ?> dataMap) {
+    public List<String> logData(String deviceId, Map<String, ?> dataMap) {
         Device device = deviceRepo.findById(deviceId).get();
         device.setLastActiveTime(LocalDateTime.now());
         deviceRepo.save(device);

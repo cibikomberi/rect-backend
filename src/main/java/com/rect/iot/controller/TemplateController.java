@@ -30,9 +30,9 @@ public class TemplateController {
     @Autowired
     private TemplateService templateService;
 
-    @GetMapping("/templates/{id}")
-    public List<Template> getTemplates(@PathVariable Long id) {
-        return templateService.getTemplates(id);
+    @GetMapping("/templates")
+    public List<Template> getMyTemplates() {
+        return templateService.getMyTemplates();
     }
     
     @PostMapping("/template")
@@ -40,31 +40,28 @@ public class TemplateController {
         return templateService.createTemplate(json.get("name").asText(), json.get("board").asText());
     }
 
-    @GetMapping("/template/{templateId}")
-    public Template getTemplateInfo(@PathVariable Long templateId) {
-        return templateService.getTemplateInfo(templateId);
+    @GetMapping("/template/{id}")
+    public Template getTemplateInfo(@PathVariable String id) throws IllegalAccessException {
+        return templateService.getTemplateInfo(id);
     }
 
     @PutMapping("template/{id}")
-    public Template updateTemplateInfo(@PathVariable Long id, @RequestPart Template info, @RequestPart TemplateMetadata metadata) {
-        System.out.println(id);
-        System.out.println(info);
-        System.out.println(metadata);
-        return templateService.updateTemplateInfo(id, info, metadata);
+    public Template updateTemplateInfo(@PathVariable String id, @RequestPart Template info) throws IllegalAccessException {
+        return templateService.updateTemplateInfo(id, info);
     }
 
     @GetMapping("/template/metadata/{templateId}")
-    public TemplateMetadata getTemplateMetadata(@PathVariable Long templateId){
+    public TemplateMetadata getTemplateMetadata(@PathVariable String templateId) throws IllegalAccessException{
         return templateService.getTemplateMetadata(templateId);
     }
 
     @PostMapping("/template/flow/{id}")
-    public ResponseEntity<?> saveFlow(@PathVariable Long id, @RequestBody Flow flow) {
+    public ResponseEntity<?> saveFlow(@PathVariable String id, @RequestBody Flow flow) {
         return new ResponseEntity<>(templateService.saveTemplateFlow(id, flow), HttpStatus.OK);
     }
 
     @GetMapping("/template/flow/{id}")
-    public ResponseEntity<?> getFlow(@PathVariable Long id) {
+    public ResponseEntity<?> getFlow(@PathVariable String id) {
         return new ResponseEntity<>(templateService.getFlow(id), HttpStatus.OK);
     }
 }

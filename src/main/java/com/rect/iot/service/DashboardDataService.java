@@ -33,7 +33,7 @@ public class DashboardDataService {
     // @Autowired
     // private DeviceMetadataRepo deviceMetadataRepo;
 
-    public Object resolveDashboardData(Long deviceId, String datastreamId, String range ) {
+    public Object resolveDashboardData(String deviceId, String datastreamId, String range ) {
         // DashboardData data = dashboardDataRepo.findById(dashboardId).get();
         // Widget widgetData = data.getWidgetData().get(widgetId);
         // String widgetType = widgetData.getClass().getSimpleName();
@@ -68,7 +68,7 @@ public class DashboardDataService {
         }
     }
 
-    public Object receiveDashboardData(Long deviceId, String datastreamId, String dataIn) {
+    public Object receiveDashboardData(String deviceId, String datastreamId, String dataIn) {
         Device device = deviceRepo.findById(deviceId).get();
         DeviceMetadata metadata = deviceMetadataRepo.findById(device.getMetadataId()).get();
         List<Datastream> datastreams = metadata.getDatastreams();

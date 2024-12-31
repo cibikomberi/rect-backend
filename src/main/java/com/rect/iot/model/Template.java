@@ -1,10 +1,11 @@
 package com.rect.iot.model;
 
+import java.util.Map;
+
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,11 +16,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Entity
+@Document
 public class Template {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long id;
+    private String id;
     private String name;
 
     private String board;
@@ -29,4 +29,10 @@ public class Template {
     private String flowId;
     @JsonIgnore
     private String metadataId;
+
+    @JsonIgnore
+    private String owner;
+
+    @JsonIgnore
+    private Map<String, String> userAccess;
 }

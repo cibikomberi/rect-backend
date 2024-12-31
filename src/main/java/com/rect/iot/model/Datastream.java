@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Datastream {
-    private Long deviceId;
+    private String deviceId;
 
     @Transient
     private String deviceName;

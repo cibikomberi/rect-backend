@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import com.rect.iot.model.AccessControls;
 import com.rect.iot.model.Datastream;
 
 import lombok.AllArgsConstructor;
@@ -21,7 +20,6 @@ public class TemplateMetadata {
     private String id;
 
     private List<Datastream> datastreams;
-    private List<AccessControls> accessControls;
 }
 
 

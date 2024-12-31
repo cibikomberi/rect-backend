@@ -28,13 +28,13 @@ public class DashboardController {
     private DashboardService dashboardService;
 
     @GetMapping("/dashboards") 
-    public List<Dashboard> getDashboards() {
-        return dashboardService.getDashboards();
+    public List<Dashboard> getMyDashboards() {
+        return dashboardService.getMyDashboards();
     }
 
     @GetMapping("/dashboard/{id}")
-    public Dashboard getDashboard(@PathVariable String id) {
-        return dashboardService.getDashboard(id);
+    public Dashboard getDashboardInfo(@PathVariable String id) throws IllegalAccessException {
+        return dashboardService.getDashboardInfo(id);
     }
 
     @PostMapping("/dashboard")
@@ -42,19 +42,19 @@ public class DashboardController {
         return dashboardService.createDashboard(dashboard);
     }
 
-    @GetMapping("/dashboard/data/{dashboardDataId}")
-    public DashboardData getDashboardData(@PathVariable String dashboardDataId) {
-        return dashboardService.getDashboardData(dashboardDataId);
+    @GetMapping("/dashboard/data/{dashboardId}")
+    public Dashboard getDashboardData(@PathVariable String dashboardId) throws IllegalAccessException {
+        return dashboardService.getDashboardData(dashboardId);
     }
 
     @GetMapping("/dashboard/datastreams/{dashboardId}")
-    public List<Datastream> getDatastreams(@PathVariable String dashboardId) {
+    public List<Datastream> getDatastreams(@PathVariable String dashboardId) throws IllegalAccessException {
         return dashboardService.getDatastreams(dashboardId);
     }   
 
-    @PutMapping("/dashboard/data/{dashboardDataId}")
-    public DashboardData updateDashboardData(@PathVariable String dashboardDataId, @RequestBody DashboardData data) {
-        return dashboardService.updateDashboardData(dashboardDataId, data);
+    @PutMapping("/dashboard/data/{dashboardId}")
+    public DashboardData updateDashboardData(@PathVariable String dashboardId, @RequestBody DashboardData data) throws IllegalAccessException {
+        return dashboardService.updateDashboardData(dashboardId, data);
     }
 
     // @GetMapping("/dashboard/data")
