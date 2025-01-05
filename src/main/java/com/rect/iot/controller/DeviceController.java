@@ -1,5 +1,6 @@
 package com.rect.iot.controller;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +13,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -22,7 +26,6 @@ import com.rect.iot.model.device.Device;
 import com.rect.iot.model.device.DeviceMetadata;
 import com.rect.iot.model.node.Flow;
 import com.rect.iot.service.DeviceService;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 
@@ -49,8 +52,8 @@ public class DeviceController {
     }
     
     @PutMapping("device/{id}")
-    public Device updateDeviceInfo(@PathVariable String id, @RequestBody Device info) throws IllegalAccessException {
-        return deviceService.updateDeviceInfo(id, info);
+    public Device updateDeviceInfo(@PathVariable String id, @RequestPart Device info, @RequestPart(required = false) MultipartFile image) throws IllegalAccessException, IOException {
+        return deviceService.updateDeviceInfo(id, info, image);
     }
 
     @GetMapping("/device/metadata/{deviceId}")
@@ -59,12 +62,12 @@ public class DeviceController {
     }
 
     @PostMapping("/device/datastream/{deviceId}")
-    public String addDatastream(@PathVariable String deviceId, @RequestBody Datastream datastream) throws IllegalAccessException {
+    public Datastream addDatastream(@PathVariable String deviceId, @RequestBody Datastream datastream) throws IllegalAccessException {
         return deviceService.addDatastream(deviceId, datastream);
     }
     
     @PutMapping("/device/datastream/{deviceId}/{datastreamId}")
-    public String updateDatastream(@PathVariable String deviceId, @PathVariable String datastreamId, @RequestBody Datastream datastream) throws IllegalAccessException {
+    public Datastream updateDatastream(@PathVariable String deviceId, @PathVariable String datastreamId, @RequestBody Datastream datastream) throws IllegalAccessException {
         return deviceService.updateDatastream(deviceId, datastreamId, datastream);
     }
 
@@ -81,6 +84,16 @@ public class DeviceController {
     @DeleteMapping("/device/userAccess/{deviceId}/{userId}")
     public String removeUserAccess(@PathVariable String deviceId, @PathVariable String userId) throws IllegalAccessException {
         return deviceService.removeUserAccess(deviceId, userId);
+    }
+
+    @GetMapping("/device/image/{id}")
+    public ResponseEntity<byte[]> resolveImage(@PathVariable String id){
+        return deviceService.resolveImage(id);
+    }
+
+    @PostMapping("/device/ota/{deviceId}")
+    public String saveOta(@PathVariable String deviceId, @RequestPart("file") MultipartFile file, @RequestPart("version") JsonNode json) throws IllegalAccessException{ 
+        return deviceService.saveOta(deviceId, file, json.get("version").asText())        ;
     }
 
     @GetMapping("/friends")

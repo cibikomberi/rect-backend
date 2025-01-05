@@ -83,6 +83,7 @@ public class DashboardService {
             List<Datastream> datastreams = new ArrayList<>();
 
             for (String deviceId : dashboard.getAssociatedDevices()) {
+                System.out.println(deviceId);
                 Device device = deviceRepo.findById(deviceId).get();
                 DeviceMetadata metadata = deviceMetadataRepo.findById(device.getMetadataId()).get();
                 metadata.getDatastreams().forEach(datastream -> datastream.setDeviceName(device.getName()));

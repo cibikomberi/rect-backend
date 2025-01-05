@@ -1,5 +1,8 @@
 package com.rect.iot.service;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,6 +11,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
@@ -79,5 +88,39 @@ public class ThingService {
             }
         }
         return invalidKeys;
+    }
+
+    public ResponseEntity<?> updateThing(String deviceId, String version) throws IOException {
+        Device device = deviceRepo.findById(deviceId).get();
+        if (version.equals(device.getVersion())) {
+            if (!device.getIsUpToDate()) {
+                device.setIsUpToDate(true);
+                deviceRepo.save(device);
+            }
+            System.out.println("up to date");
+            return new ResponseEntity<>(HttpStatusCode.valueOf(304));
+        }
+        String filename = deviceId + ".bin";
+        String fileUploadpath = System.getProperty("user.dir") + "/Uploads";
+
+        Path fileStorageLocation = Paths.get(fileUploadpath)
+                .toAbsolutePath().normalize();
+        Path filePath = fileStorageLocation.resolve(filename).normalize();
+        Resource resource = new UrlResource(filePath.toUri());
+
+        String contentType = "application/octet-stream";
+        String headerValue = "attachment; filename=\"" + filename + "\"";
+        long l = resource.getContentAsByteArray().length;
+
+        // isESPDeviceUpToDate = true;
+        // System.out.println("Is device up to date: " +
+        // EspupdateApplication.isDeviceUpToDate);
+        System.out.println("ESP updating");
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION, headerValue)
+                .header("Content-Length", String.valueOf(l))
+                .body(resource);
     }
 }

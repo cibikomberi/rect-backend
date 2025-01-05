@@ -33,10 +33,13 @@ public class Device {
 
     private Boolean inheritTemplate;
     private Boolean isUpToDate;
+    private String version;
     private LocalDateTime lastActiveTime;
 
-    @JsonIgnore
+    // @JsonIgnore
     private String templateId;
+    @Transient
+    private String templateName;
 
     @JsonIgnore
     private String metadataId;
@@ -44,17 +47,14 @@ public class Device {
     private String dashboardId;
     
     @Transient
-    private String templateName;
-
-    @Transient
     private String flowId;
 
     @JsonIgnore
     private String owner;
-
     @JsonIgnore
     private Map<String, String> userAccess;
 
+    private String image;
 
     @Column(unique = true)
     private String apiKey;

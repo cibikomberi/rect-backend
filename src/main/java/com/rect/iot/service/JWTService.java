@@ -21,19 +21,20 @@ import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JWTService {
-    private String secretKey = "";
+    private String secretKey = "Kygqrhqwn0W8E5j8vAyaq7KIza1WqzCjf2FgLbPepYg=";
 
     public JWTService() {
-        try {
-            KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
-            SecretKey key = keyGenerator.generateKey();
-            secretKey = Base64.getEncoder().encodeToString(key.getEncoded());
-        } catch (NoSuchAlgorithmException e) {
+        // try {
+        //     KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
+        //     SecretKey key = keyGenerator.generateKey();
+        //     secretKey = Base64.getEncoder().encodeToString(key.getEncoded());
+        // } catch (NoSuchAlgorithmException e) {
             
-        }
+        // }
     }
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
+        System.out.println("s"+secretKey);
 
         return Jwts.builder()
             .claims()

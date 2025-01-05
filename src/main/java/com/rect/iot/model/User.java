@@ -21,6 +21,9 @@ public class User {
 
     private String name;
     private String email;
+    private Long phone;
+
+    private String imageId;
     
     @JsonIgnore
     private String password;

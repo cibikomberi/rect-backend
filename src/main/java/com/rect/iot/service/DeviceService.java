@@ -1,17 +1,22 @@
 package com.rect.iot.service;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.rect.iot.model.Dashboard;
 import com.rect.iot.model.Datastream;
+import com.rect.iot.model.Image;
 import com.rect.iot.model.Template;
 import com.rect.iot.model.ThingData;
 import com.rect.iot.model.User;
@@ -25,6 +30,7 @@ import com.rect.iot.repository.DashboardRepo;
 import com.rect.iot.repository.DeviceMetadataRepo;
 import com.rect.iot.repository.DeviceRepo;
 import com.rect.iot.repository.FlowRepo;
+import com.rect.iot.repository.ImageRepo;
 import com.rect.iot.repository.TemplateRepo;
 import com.rect.iot.repository.ThingDataRepo;
 import com.rect.iot.repository.UserRepo;
@@ -44,6 +50,7 @@ public class DeviceService {
     private UserService userService;
     private ThingDataRepo thingDataRepo;
     private UserRepo userRepo;
+    private ImageRepo imageRepo;
 
     public List<Device> getMyDevices() {
         String userId = userService.getMyUserId();
@@ -103,10 +110,21 @@ public class DeviceService {
 
     // TODO: change in react app
     // TODO: add method to update access and datastream
-    public Device updateDeviceInfo(String id, Device newInfo) throws IllegalAccessException {
+    public Device updateDeviceInfo(String id, Device newInfo, MultipartFile multipartImage)
+            throws IllegalAccessException, IOException {
         Device device = deviceRepo.findById(id).get();
         String access = getAccessLevel(device);
         if (access.equals("Editor") || access.equals("Owner")) {
+            if (multipartImage != null) {
+                Image image = new Image();
+                image.setImageType(multipartImage.getContentType());
+                image.setContent(multipartImage.getBytes());
+                if (device.getImage() != null) {
+                    imageRepo.deleteById(device.getImage());
+                }
+                Image savedImage = imageRepo.save(image);
+                device.setImage(savedImage.getId());
+            }
             device.setName(newInfo.getName());
             device.setDescription(newInfo.getDescription());
             device.setInheritTemplate(newInfo.getInheritTemplate());
@@ -127,7 +145,7 @@ public class DeviceService {
         throw new IllegalAccessException("User does not have access to this device");
     }
 
-    public String addDatastream(String deviceId, Datastream datastream) throws IllegalAccessException {
+    public Datastream addDatastream(String deviceId, Datastream datastream) throws IllegalAccessException {
         Device device = deviceRepo.findById(deviceId).get();
         String access = getAccessLevel(device);
 
@@ -138,14 +156,14 @@ public class DeviceService {
                 datastream.setDeviceId(deviceId);
                 existingDatastreams.add(datastream);
                 deviceMetadataRepo.save(metadata);
-                return "ok";
+                return datastream;
             }
-            return "Id already exists";
+            throw new IllegalAccessException("Id already exists");
         }
         throw new IllegalAccessException("User does not have access to this device");
     }
 
-    public String updateDatastream(String deviceId, String datastreamId, Datastream datastream)
+    public Datastream updateDatastream(String deviceId, String datastreamId, Datastream datastream)
             throws IllegalAccessException {
         Device device = deviceRepo.findById(deviceId).get();
         String access = getAccessLevel(device);
@@ -155,7 +173,7 @@ public class DeviceService {
             List<Datastream> existingDatastreams = metadata.getDatastreams();
 
             if (!datastreamId.equals(datastream.getIdentifier()) && existingDatastreams.contains(datastream)) {
-                return "Id already exists";
+                throw new IllegalAccessException("Id already exists");
             }
 
             for (int i = 0; i < existingDatastreams.size(); i++) {
@@ -166,7 +184,7 @@ public class DeviceService {
                         datastream.setDeviceId(deviceId);
                         existingDatastreams.set(i, datastream);
                         System.out.println(deviceMetadataRepo.save(metadata));
-                        return "ok";
+                        return datastream;
                     } else {
                         List<ThingData<?>> deleted = thingDataRepo.deleteByDeviceIdAndDatastreamId(deviceId,
                                 datastreamId);
@@ -175,12 +193,13 @@ public class DeviceService {
                         datastream.setDeviceId(deviceId);
                         existingDatastreams.set(i, datastream);
                         deviceMetadataRepo.save(metadata);
-                        return "ok";
+                        return datastream;
                     }
                 }
             }
 
-            return "Invalid id";
+            throw new IllegalAccessException("Invalid id");
+
         }
         throw new IllegalAccessException("User does not have access to this device");
     }
@@ -209,7 +228,6 @@ public class DeviceService {
         String access = getAccessLevel(device);
 
         if (accessLevel.equals("Editor") || accessLevel.equals("Viewer")) {
-            System.out.println("a");
             if (access.equals("Editor") || access.equals("Owner")) {
                 User user = userRepo.findById(userId).get();
                 user.getSharedDevices().add(deviceId);
@@ -255,6 +273,37 @@ public class DeviceService {
         deviceRepo.save(device);
 
         return flow;
+    }
+
+    public ResponseEntity<byte[]> resolveImage(String id) {
+        Image image = imageRepo.findById(id).get();
+        byte[] imageFile = image.getContent();
+        return ResponseEntity.ok().contentType(MediaType.valueOf(image.getImageType())).body(imageFile);
+    }
+
+    public String saveOta(String deviceId, MultipartFile file, String version) throws IllegalAccessException {
+        Device device = deviceRepo.findById(deviceId).get();
+        String access = getAccessLevel(device);
+
+        if (access.equals("Editor") || access.equals("Owner")) {
+            String filePath = System.getProperty("user.dir") + "/Uploads" + File.separator + deviceId + ".bin";
+            String fileUploadStatus;
+
+            try {
+                FileOutputStream fout = new FileOutputStream(filePath);
+                fout.write(file.getBytes());
+                fout.close();
+                fileUploadStatus = "File Uploaded Successfully";
+                device.setIsUpToDate(false);
+                device.setVersion(version);
+                deviceRepo.save(device);
+            } catch (Exception e) {
+                e.printStackTrace();
+                fileUploadStatus = "Error in uploading file: " + e;
+            }
+            return fileUploadStatus;
+        }
+        throw new IllegalAccessException("User does not have access to this device");
     }
 
     private String getAccessLevel(Device device) {

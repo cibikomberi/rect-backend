@@ -35,4 +35,6 @@ public class Template {
 
     @JsonIgnore
     private Map<String, String> userAccess;
+
+    private String image;
 }
