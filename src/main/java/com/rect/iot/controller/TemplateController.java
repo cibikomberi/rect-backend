@@ -29,16 +29,13 @@ import com.rect.iot.model.template.TemplateMetadata;
 import com.rect.iot.service.TemplateService;
 
 
-
-
-
 @RestController
 @CrossOrigin
 public class TemplateController {
 
     @Autowired
     private TemplateService templateService;
-
+    
     @GetMapping("/templates")
     public List<Template> getMyTemplates() {
         return templateService.getMyTemplates();
@@ -105,7 +102,7 @@ public class TemplateController {
     }
 
     @PostMapping("/template/build/{templateId}")
-    public String updateBuild(@PathVariable String templateId, @RequestBody JsonNode json) throws InvalidAttributesException, IllegalAccessException {
+    public String updateBuild(@PathVariable String templateId, @RequestBody JsonNode json) throws InvalidAttributesException, IllegalAccessException, IOException, InterruptedException {
         return templateService.updateBuild(templateId, json.get("version").asText(), json.get("type").asText());
     }
     

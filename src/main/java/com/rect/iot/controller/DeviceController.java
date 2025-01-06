@@ -93,6 +93,9 @@ public class DeviceController {
 
     @GetMapping("/device/image/{id}")
     public ResponseEntity<byte[]> resolveImage(@PathVariable String id){
+        if (id.equals("null")) {
+            return null;
+        }
         return deviceService.resolveImage(id);
     }
 

@@ -20,7 +20,7 @@ public class CodeController {
     private CodeService codeService;
     
     @PostMapping("/code/upload/{templateId}")
-    public ResponseEntity<String> saveTemplateCode(@PathVariable String templateId, @RequestPart(name = "files") MultipartFile[] files) throws IOException, InterruptedException {
+    public ResponseEntity<String> saveTemplateCode(@PathVariable String templateId, @RequestPart(name = "files") MultipartFile[] files) throws IOException, InterruptedException, IllegalAccessException {
         System.out.println(templateId);
         System.out.println("code uploading");
         System.out.println(files);

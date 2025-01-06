@@ -19,8 +19,10 @@ import com.rect.iot.model.Image;
 import com.rect.iot.model.Template;
 import com.rect.iot.model.User;
 import com.rect.iot.model.VersionControl;
+import com.rect.iot.model.device.Device;
 import com.rect.iot.model.node.Flow;
 import com.rect.iot.model.template.TemplateMetadata;
+import com.rect.iot.repository.DeviceRepo;
 import com.rect.iot.repository.FlowRepo;
 import com.rect.iot.repository.ImageRepo;
 import com.rect.iot.repository.TemplateMetadataRepo;
@@ -37,13 +39,14 @@ import lombok.AllArgsConstructor;
 public class TemplateService {
 
     private TemplateRepo templateRepo;
+    private DeviceRepo deviceRepo;
     private TemplateMetadataRepo templateMetadataRepo;
     private FlowRepo flowRepo;
     private UserService userService;
     private UserRepo userRepo;
     private ImageRepo imageRepo;
     private VersionControlRepo versionControlRepo;
-
+    private BuildService buildService;
 
     public List<Template> getMyTemplates() {
         String userId = userService.getMyUserId();
@@ -252,13 +255,17 @@ public class TemplateService {
         throw new IllegalAccessException("User does not have access to this template");
     }
 
-    public String updateBuild(String templateId, String version, String type) throws InvalidAttributesException, IllegalAccessException {
+    public String updateBuild(String templateId, String version, String type) throws InvalidAttributesException, IllegalAccessException, IOException, InterruptedException {
         Template template = templateRepo.findById(templateId).get();
         String access = getAccessLevel(template);
         if (access.equals("Editor") || access.equals("Owner")) {
             if ("Prod".equals(type)) {
                 template.setProductionVersion(version);
                 templateRepo.save(template);
+                List<Device> devicesToUpdate = deviceRepo.findByTemplateIdAndInheritTemplate(templateId, true);
+                for (Device device : devicesToUpdate) {
+                    buildService.buildProject(templateId, device, version);
+                }
                 return "ok";
             }
             if ("Dev".equals(type)) {
@@ -308,7 +315,7 @@ public class TemplateService {
         return flow;
     }
 
-    private String getAccessLevel(Template template) {
+    public String getAccessLevel(Template template) {
         String userId = userService.getMyUserId();
 
         if (template.getOwner().equals(userId)) {
