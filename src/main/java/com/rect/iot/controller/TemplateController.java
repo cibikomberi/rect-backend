@@ -1,18 +1,9 @@
 package com.rect.iot.controller;
 
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.rect.iot.model.Datastream;
-import com.rect.iot.model.Template;
-import com.rect.iot.model.node.Flow;
-import com.rect.iot.model.template.TemplateMetadata;
-import com.rect.iot.service.TemplateService;
-
 import java.io.IOException;
 import java.util.List;
+
+import javax.naming.directory.InvalidAttributesException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,6 +16,19 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.rect.iot.model.Datastream;
+import com.rect.iot.model.Template;
+import com.rect.iot.model.VersionControl;
+import com.rect.iot.model.node.Flow;
+import com.rect.iot.model.template.TemplateMetadata;
+import com.rect.iot.service.TemplateService;
+
+
 
 
 
@@ -84,6 +88,27 @@ public class TemplateController {
     public String removeUserAccess(@PathVariable String templateId, @PathVariable String userId) throws IllegalAccessException {
         return templateService.removeUserAccess(templateId, userId);
     }
+
+    @GetMapping("/templates/shared")
+    public List<Template> getSharedTemplates() {
+        return templateService.getSharedTemplates();
+    }
+
+    @GetMapping("/template/version-control/{templateId}")
+    public List<VersionControl> getTemplateVersions(@PathVariable String templateId) throws IllegalAccessException {
+        return templateService.getTemplateVersions(templateId);
+    }
+
+    @PostMapping("/template/version-control/{templateId}")
+    public VersionControl createTemplateVersions(@PathVariable String templateId, @RequestBody JsonNode json) throws IllegalAccessException {
+        return templateService.createTemplateVersions(templateId, json.get("version").asText(), json.get("description").asText());
+    }
+
+    @PostMapping("/template/build/{templateId}")
+    public String updateBuild(@PathVariable String templateId, @RequestBody JsonNode json) throws InvalidAttributesException, IllegalAccessException {
+        return templateService.updateBuild(templateId, json.get("version").asText(), json.get("type").asText());
+    }
+    
 
     @GetMapping("/template/image/{id}")
     public ResponseEntity<byte[]> resolveImage(@PathVariable String id){

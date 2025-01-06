@@ -86,6 +86,11 @@ public class DeviceController {
         return deviceService.removeUserAccess(deviceId, userId);
     }
 
+    @GetMapping("/devices/shared")
+    public List<Device> getSharedTemplates() {
+        return deviceService.getSharedDevices();
+    }
+
     @GetMapping("/device/image/{id}")
     public ResponseEntity<byte[]> resolveImage(@PathVariable String id){
         return deviceService.resolveImage(id);
@@ -96,6 +101,11 @@ public class DeviceController {
         return deviceService.saveOta(deviceId, file, json.get("version").asText())        ;
     }
 
+    @PostMapping("/device/constants/{deviceId}/{version}")
+    public String saveDeviceConstants(@PathVariable String deviceId,@PathVariable String version , @RequestBody String data) throws IllegalAccessException {
+        return deviceService.saveDeviceConstants(deviceId, version, data);
+    }
+    
     @GetMapping("/friends")
     public List<User> getMyFriends(@RequestParam String param) {
         return deviceService.getFriends(param);

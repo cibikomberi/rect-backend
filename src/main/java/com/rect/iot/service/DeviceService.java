@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.rect.iot.model.Dashboard;
 import com.rect.iot.model.Datastream;
+import com.rect.iot.model.DeviceConstants;
 import com.rect.iot.model.Image;
 import com.rect.iot.model.Template;
 import com.rect.iot.model.ThingData;
@@ -27,6 +28,7 @@ import com.rect.iot.model.widget.DashboardData;
 import com.rect.iot.model.widget.Widget;
 import com.rect.iot.repository.DashboardDataRepo;
 import com.rect.iot.repository.DashboardRepo;
+import com.rect.iot.repository.DeviceConstantsRepo;
 import com.rect.iot.repository.DeviceMetadataRepo;
 import com.rect.iot.repository.DeviceRepo;
 import com.rect.iot.repository.FlowRepo;
@@ -51,6 +53,7 @@ public class DeviceService {
     private ThingDataRepo thingDataRepo;
     private UserRepo userRepo;
     private ImageRepo imageRepo;
+    private DeviceConstantsRepo deviceConstantsRepo;
 
     public List<Device> getMyDevices() {
         String userId = userService.getMyUserId();
@@ -256,6 +259,13 @@ public class DeviceService {
         throw new IllegalAccessException("User does not have access to this device");
     }
 
+    public List<Device> getSharedDevices() {
+        User user = userService.whoAmI();
+        List<Device> devices = deviceRepo.findAllById(user.getSharedDevices());
+        devices.stream().forEach(device -> device.setMyAccess(getAccessLevel(device)));
+        return devices;
+    }
+
     public List<User> getFriends(String nickname) {
         return userRepo.searchUsers(nickname);
         // return null;
@@ -302,6 +312,26 @@ public class DeviceService {
                 fileUploadStatus = "Error in uploading file: " + e;
             }
             return fileUploadStatus;
+        }
+        throw new IllegalAccessException("User does not have access to this device");
+    }
+
+    // TODO: verify version with template
+    public String saveDeviceConstants(String deviceId, String version, String data) throws IllegalAccessException {
+        Device device = deviceRepo.findById(deviceId).get();
+        String access = getAccessLevel(device);
+
+        if (access.equals("Editor") || access.equals("Owner")) {
+            DeviceConstants constants = deviceConstantsRepo.findByDeviceIdAndVersion(deviceId, version);
+            if (constants == null) {
+                constants = new DeviceConstants();
+            }
+            constants.setDeviceId(deviceId);
+            constants.setVersion(version);
+            constants.setData(data);
+
+            deviceConstantsRepo.save(constants);
+            return "ok";
         }
         throw new IllegalAccessException("User does not have access to this device");
     }

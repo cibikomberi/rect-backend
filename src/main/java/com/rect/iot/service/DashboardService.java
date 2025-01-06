@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.rect.iot.model.Dashboard;
 import com.rect.iot.model.Datastream;
+import com.rect.iot.model.User;
 import com.rect.iot.model.device.Device;
 import com.rect.iot.model.device.DeviceMetadata;
 import com.rect.iot.model.widget.DashboardData;
@@ -105,6 +106,13 @@ public class DashboardService {
                     .build());
         }
         throw new IllegalAccessException("User does not have access to this device");
+    }
+
+    public List<Dashboard> getSharedDashboards() {
+        User user = userService.whoAmI();
+        List<Dashboard> dashboards = dashboardRepo.findAllById(user.getSharedDashboards());
+        dashboards.stream().forEach(dashboard -> dashboard.setMyAccess(getAccessLevel(dashboard)));
+        return dashboards;
     }
 
     private String getAccessLevel(Dashboard dashboard) {

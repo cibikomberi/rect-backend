@@ -19,9 +19,7 @@ public class RectUserDetailsService implements UserDetailsService{
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        System.out.println("Username: " + username);
         User user = userRepo.findByEmail(username);
-        System.out.println(user);
         if(user == null) {
             throw new UsernameNotFoundException("User not found");
         }

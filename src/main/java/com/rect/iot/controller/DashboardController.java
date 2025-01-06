@@ -57,6 +57,11 @@ public class DashboardController {
         return dashboardService.updateDashboardData(dashboardId, data);
     }
 
+    @GetMapping("/dashboards/shared")
+    public List<Dashboard> getSharedTemplates() {
+        return dashboardService.getSharedDashboards();
+    }
+
     // @GetMapping("/dashboard/data")
     // public String serveDashboard(@RequestParam String param) {
     //     return new String();

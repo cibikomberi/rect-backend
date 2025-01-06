@@ -1,11 +1,14 @@
 package com.rect.iot.service;
 
+
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.naming.directory.InvalidAttributesException;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -15,6 +18,7 @@ import com.rect.iot.model.Datastream;
 import com.rect.iot.model.Image;
 import com.rect.iot.model.Template;
 import com.rect.iot.model.User;
+import com.rect.iot.model.VersionControl;
 import com.rect.iot.model.node.Flow;
 import com.rect.iot.model.template.TemplateMetadata;
 import com.rect.iot.repository.FlowRepo;
@@ -22,24 +26,23 @@ import com.rect.iot.repository.ImageRepo;
 import com.rect.iot.repository.TemplateMetadataRepo;
 import com.rect.iot.repository.TemplateRepo;
 import com.rect.iot.repository.UserRepo;
+import com.rect.iot.repository.VersionControlRepo;
+
+import lombok.AllArgsConstructor;
 
 
 
 @Service
+@AllArgsConstructor
 public class TemplateService {
 
-    @Autowired
     private TemplateRepo templateRepo;
-    @Autowired
     private TemplateMetadataRepo templateMetadataRepo;
-    @Autowired
     private FlowRepo flowRepo;
-    @Autowired
     private UserService userService;
-    @Autowired
     private UserRepo userRepo;
-    @Autowired
     private ImageRepo imageRepo;
+    private VersionControlRepo versionControlRepo;
 
 
     public List<Template> getMyTemplates() {
@@ -56,6 +59,7 @@ public class TemplateService {
         return templateRepo.save(Template.builder()
                 .board(board)
                 .name(name)
+                .productionVersion("")
                 .metadataId(metadata.getId())
                 .owner(userId)
                 .userAccess(new HashMap<>())
@@ -215,7 +219,56 @@ public class TemplateService {
             templateRepo.save(template);
             return "ok";
         }
-        throw new IllegalAccessException("User does not have access to this device");
+        throw new IllegalAccessException("User does not have access to this template");
+    }
+
+    public List<Template> getSharedTemplates() {
+        User user = userService.whoAmI();
+        List<Template> templates = templateRepo.findAllById(user.getSharedTemplates());
+        templates.stream().forEach(template -> template.setMyAccess(getAccessLevel(template)));
+        return templates;
+    }
+
+    public List<VersionControl> getTemplateVersions(String templateId) throws IllegalAccessException {
+        Template template = templateRepo.findById(templateId).get();
+        String access = getAccessLevel(template);
+        if (access.equals("Viewer") || access.equals("Editor") || access.equals("Owner")) {
+            return versionControlRepo.findByTemplateIdOrderByCreateDateDesc(templateId);
+        }
+        throw new IllegalAccessException("User does not have access to this template");
+    }
+
+    public VersionControl createTemplateVersions(String templateId, String version, String description) throws IllegalAccessException {
+        Template template = templateRepo.findById(templateId).get();
+        String access = getAccessLevel(template);
+        if (access.equals("Editor") || access.equals("Owner")) {
+            return versionControlRepo.save(VersionControl.builder()
+                .templateId(templateId)
+                .version(version)
+                .description(description)
+                .createDate(LocalDateTime.now())
+                .build());
+        }
+        throw new IllegalAccessException("User does not have access to this template");
+    }
+
+    public String updateBuild(String templateId, String version, String type) throws InvalidAttributesException, IllegalAccessException {
+        Template template = templateRepo.findById(templateId).get();
+        String access = getAccessLevel(template);
+        if (access.equals("Editor") || access.equals("Owner")) {
+            if ("Prod".equals(type)) {
+                template.setProductionVersion(version);
+                templateRepo.save(template);
+                return "ok";
+            }
+            if ("Dev".equals(type)) {
+                template.setDevVersion(version);
+                templateRepo.save(template);
+                return "ok";
+            }
+            throw new InvalidAttributesException("Invalid type");
+        }
+        throw new IllegalAccessException("User does not have access to this template");
     }
 
     public ResponseEntity<byte[]> resolveImage(String id) {

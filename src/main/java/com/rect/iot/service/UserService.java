@@ -42,13 +42,10 @@ public class UserService {
             user.setName(name);
             user.setEmail(email);
             user.setPassword(encoder.encode(password));
-            user.setMyDevices(new HashSet<>());
-            user.setMyTemplates(new HashSet<>());
-            user.setMyDashboards(new HashSet<>());
             user.setSharedDevices(new HashSet<>());
             user.setSharedTemplates(new HashSet<>());
             user.setSharedDashboards(new HashSet<>());
-
+            
             return userRepo.save(user);
         }
         throw new DuplicateKeyException("User already exists");

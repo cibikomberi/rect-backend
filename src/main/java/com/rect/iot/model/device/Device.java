@@ -3,13 +3,12 @@ package com.rect.iot.model.device;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Id;
-import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,6 +39,8 @@ public class Device {
     private String templateId;
     @Transient
     private String templateName;
+    @Transient
+    private String myAccess;
 
     @JsonIgnore
     private String metadataId;
@@ -56,6 +57,6 @@ public class Device {
 
     private String image;
 
-    @Column(unique = true)
+
     private String apiKey;
 }

@@ -3,13 +3,13 @@ package com.rect.iot.model;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.rect.iot.model.widget.DashboardData;
 
-import jakarta.persistence.Id;
-import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -30,7 +30,9 @@ public class Dashboard {
     private String dashboardDataId;
     @Transient
     private DashboardData dashboardData;
-
+    @Transient
+    private String myAccess;
+    
     @JsonIgnore
     private String owner;
 

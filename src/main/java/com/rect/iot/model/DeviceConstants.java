@@ -11,13 +11,14 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 @Document
-@AllArgsConstructor
 @NoArgsConstructor
-public class Image {
+@AllArgsConstructor
+public class DeviceConstants {
     @Id
-    String id;
+    private String id;
 
-    private String imageType;
-
-    public byte[] content;
+    private String deviceId;
+    private String version;
+    
+    private String data;
 }

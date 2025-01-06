@@ -1,5 +1,7 @@
 package com.rect.iot.controller;
 
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,11 +20,11 @@ public class CodeController {
     private CodeService codeService;
     
     @PostMapping("/code/upload/{templateId}")
-    public ResponseEntity<String> saveTemplateCode(@PathVariable String templateId, @RequestPart("files") MultipartFile[] files) {
+    public ResponseEntity<String> saveTemplateCode(@PathVariable String templateId, @RequestPart(name = "files") MultipartFile[] files) throws IOException, InterruptedException {
+        System.out.println(templateId);
         System.out.println("code uploading");
         System.out.println(files);
         return codeService.saveTemplateCode(templateId, files);
-        // return null;
     }
     
 }

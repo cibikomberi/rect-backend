@@ -1,6 +1,7 @@
 package com.rect.iot.model;
 
-import jakarta.persistence.Transient;
+import org.springframework.data.annotation.Transient;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
