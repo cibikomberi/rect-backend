@@ -52,7 +52,7 @@ public class DeviceController {
     }
     
     @PutMapping("device/{id}")
-    public Device updateDeviceInfo(@PathVariable String id, @RequestPart Device info, @RequestPart(required = false) MultipartFile image) throws IllegalAccessException, IOException {
+    public Device updateDeviceInfo(@PathVariable String id, @RequestPart Device info, @RequestPart(required = false) MultipartFile image) throws IllegalAccessException, IOException, InterruptedException {
         return deviceService.updateDeviceInfo(id, info, image);
     }
 

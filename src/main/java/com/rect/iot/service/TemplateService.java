@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.rect.iot.model.BuildErrors;
 import com.rect.iot.model.Datastream;
 import com.rect.iot.model.Image;
 import com.rect.iot.model.Template;
@@ -22,6 +23,7 @@ import com.rect.iot.model.VersionControl;
 import com.rect.iot.model.device.Device;
 import com.rect.iot.model.node.Flow;
 import com.rect.iot.model.template.TemplateMetadata;
+import com.rect.iot.repository.BuildErrorRepo;
 import com.rect.iot.repository.DeviceRepo;
 import com.rect.iot.repository.FlowRepo;
 import com.rect.iot.repository.ImageRepo;
@@ -47,6 +49,7 @@ public class TemplateService {
     private ImageRepo imageRepo;
     private VersionControlRepo versionControlRepo;
     private BuildService buildService;
+    private BuildErrorRepo buildErrorRepo;
 
     public List<Template> getMyTemplates() {
         String userId = userService.getMyUserId();
@@ -276,6 +279,14 @@ public class TemplateService {
         }
         throw new IllegalAccessException("User does not have access to this template");
     }
+
+        public List<BuildErrors> getBuildErrors(String templateId) {
+            List<BuildErrors> errors =  buildErrorRepo.findByTemplateId(templateId);
+            for (BuildErrors error : errors) {
+                error.setDeviceName(deviceRepo.findById(error.getDeviceId()).get().getName());
+            }
+            return errors;
+        }
 
     public ResponseEntity<byte[]> resolveImage(String id) {
         Image image = imageRepo.findById(id).get();

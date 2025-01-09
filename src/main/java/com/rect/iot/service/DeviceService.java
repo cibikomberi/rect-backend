@@ -55,6 +55,7 @@ public class DeviceService {
     private UserRepo userRepo;
     private ImageRepo imageRepo;
     private DeviceConstantsRepo deviceConstantsRepo;
+    private BuildService buildService;
 
     public List<Device> getMyDevices() {
         String userId = userService.getMyUserId();
@@ -117,7 +118,7 @@ public class DeviceService {
 
     // TODO: add method to update access and datastream
     public Device updateDeviceInfo(String id, Device newInfo, MultipartFile multipartImage)
-            throws IllegalAccessException, IOException {
+            throws IllegalAccessException, IOException, InterruptedException {
         Device device = deviceRepo.findById(id).get();
         String access = getAccessLevel(device);
         if (access.equals("Editor") || access.equals("Owner")) {
@@ -131,6 +132,11 @@ public class DeviceService {
                 Image savedImage = imageRepo.save(image);
                 device.setImage(savedImage.getId());
             }
+
+            if(newInfo.getInheritTemplate() && device.getInheritTemplate().equals(false)) {
+                buildService.buildProject(device.getTemplateId(), device, device.getTargetVersion());
+            }
+            
             device.setName(newInfo.getName());
             device.setDescription(newInfo.getDescription());
             device.setInheritTemplate(newInfo.getInheritTemplate());

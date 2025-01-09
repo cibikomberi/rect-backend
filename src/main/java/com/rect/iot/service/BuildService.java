@@ -49,6 +49,10 @@ public class BuildService {
         if (buildFile.exists()) {
             File renamedFile = new File(tempWorkDir + ".pio/build/node32s/" + device.getId() + ".bin");
             buildFile.renameTo(renamedFile);
+            File existingBuildFile = new File(System.getProperty("user.dir") + "/Uploads/" + device.getId() + ".bin");
+            if (existingBuildFile.exists()) {
+                existingBuildFile.delete();
+            }
             FileUtils.moveFileToDirectory(renamedFile, new File(System.getProperty("user.dir") + "/Uploads/"), true);
             FileUtils.deleteDirectory(destinationDirectory);
             System.out.println("Build ok");
@@ -75,16 +79,16 @@ public class BuildService {
     public String processResults(Process process) throws IOException, InterruptedException {
         BufferedReader reader;
         if(process.waitFor() == 0) {
-            reader = new BufferedReader(new InputStreamReader(process.getInputStream())); // process.errorReader();
+            reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         } else {
             reader = new BufferedReader(process.errorReader());
         }
         // for reading errors
-        String error = "";
+        StringBuilder result = new StringBuilder();
         String line = "";
         while ((line = reader.readLine()) != null) {
-            error += line;
+            result.append(line).append(System.lineSeparator());
         }
-        return error;
+        return result.toString();
     }
 }
