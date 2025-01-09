@@ -40,6 +40,7 @@ public class TestController {
         e.add(e2);
         e.add(e1);
         Flow flow = Flow.builder().edges(e).build();
+        System.out.println("test");
         flowRepo.save(flow);
         return new String("ok");
     }

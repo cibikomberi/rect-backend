@@ -10,14 +10,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import com.rect.iot.model.BuildErrors;
 import com.rect.iot.model.DeviceConstants;
 import com.rect.iot.model.device.Device;
+import com.rect.iot.repository.BuildErrorRepo;
 import com.rect.iot.repository.DeviceConstantsRepo;
+import com.rect.iot.repository.DeviceRepo;
 
 @Service
 public class BuildService {
     @Autowired
     private DeviceConstantsRepo deviceConstantsRepo;
+    @Autowired
+    private DeviceRepo deviceRepo;
+    @Autowired
+    private BuildErrorRepo buildErrorRepo;
 
     @Async
     public void buildProject(String templateId, Device device, String version) throws IOException, InterruptedException {
@@ -28,38 +35,56 @@ public class BuildService {
         FileUtils.copyDirectory(sourceDirectory, destinationDirectory);
 
         DeviceConstants deviceConstants = deviceConstantsRepo.findByDeviceIdAndVersion(device.getId(), version);
-        File projectConstantsFile = new File(tempWorkDir + "device_constants.h");
-        // FileUtils.delete(projectConstantsFile);
-        FileUtils.writeStringToFile(projectConstantsFile, deviceConstants.getData(), "UTF-8");
+            if (deviceConstants != null) {
+            File projectConstantsFile = new File(tempWorkDir + "device_constants.h");
+            if (projectConstantsFile.exists()) {
+                FileUtils.delete(projectConstantsFile);
+            }
+            FileUtils.writeStringToFile(projectConstantsFile, deviceConstants.getData(), "UTF-8");
+        }
 
-        buildProject(tempWorkDir);
+        String error = buildProject(tempWorkDir);
+        System.out.println(error);
+        File buildFile = new File(tempWorkDir + ".pio/build/node32s/firmware.bin");
+        if (buildFile.exists()) {
+            File renamedFile = new File(tempWorkDir + ".pio/build/node32s/" + device.getId() + ".bin");
+            buildFile.renameTo(renamedFile);
+            FileUtils.moveFileToDirectory(renamedFile, new File(System.getProperty("user.dir") + "/Uploads/"), true);
+            FileUtils.deleteDirectory(destinationDirectory);
+            System.out.println("Build ok");
+
+            device.setTargetVersion(version);
+            deviceRepo.save(device);
+        } else {
+            buildErrorRepo.save(BuildErrors.builder()
+                .templateId(templateId)
+                .deviceId(device.getId())
+                .errorData(error)
+                .build());
+        }
+        
     }
 
-     int buildProject(String dirString) throws IOException, InterruptedException {
-        String[] command = new String[] { "C:\\Users\\cibik\\.platformio\\penv\\Scripts\\platformio.exe", "run" };
+     String buildProject(String dirString) throws IOException, InterruptedException {
+        String[] command = new String[] { "C:\\Users\\cibik\\.platformio\\penv\\Scripts\\platformio.exe", "run", "-s" };
         File dir = new File(dirString);
-        // try {
         Process process = Runtime.getRuntime().exec(command, null, dir);
-        printResults(process);
-        return process.waitFor();
-        // } catch (IOException e) {
-        // return 1;
-        // } catch (InterruptedException e) {
-        // return 1;
-        // }
+        return processResults(process);
     }
 
-    public static void printResults(Process process) throws IOException, InterruptedException {
+    public String processResults(Process process) throws IOException, InterruptedException {
         BufferedReader reader;
-        if (process.waitFor() == 0) {
+        if(process.waitFor() == 0) {
             reader = new BufferedReader(new InputStreamReader(process.getInputStream())); // process.errorReader();
         } else {
             reader = new BufferedReader(process.errorReader());
         }
         // for reading errors
+        String error = "";
         String line = "";
         while ((line = reader.readLine()) != null) {
-            System.out.println(line);
+            error += line;
         }
+        return error;
     }
 }

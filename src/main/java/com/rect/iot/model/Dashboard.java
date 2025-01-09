@@ -1,7 +1,7 @@
 package com.rect.iot.model;
 
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
@@ -26,7 +26,7 @@ public class Dashboard {
     private String name;
     private String access;
     private Boolean isDeviceSpecific; 
-    private List<String> associatedDevices;
+    private Set<String> associatedDevices;
     private String dashboardDataId;
     @Transient
     private DashboardData dashboardData;

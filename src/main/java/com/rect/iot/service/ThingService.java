@@ -92,9 +92,9 @@ public class ThingService {
 
     public ResponseEntity<?> updateThing(String deviceId, String version) throws IOException {
         Device device = deviceRepo.findById(deviceId).get();
-        if (version.equals(device.getVersion())) {
-            if (!device.getIsUpToDate()) {
-                device.setIsUpToDate(true);
+        if (version.equals(device.getTargetVersion())) {
+            if (!device.getCurrentVersion().equals(version)) {
+                device.setCurrentVersion(version);
                 deviceRepo.save(device);
             }
             System.out.println("up to date");

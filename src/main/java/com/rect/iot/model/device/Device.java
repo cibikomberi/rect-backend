@@ -27,12 +27,10 @@ public class Device {
     private String board;
     private String description;
 
-    // @ManyToOne
-    // private User user;
-
     private Boolean inheritTemplate;
-    private Boolean isUpToDate;
-    private String version;
+    private String currentVersion;
+    @JsonIgnore
+    private String targetVersion;
     private LocalDateTime lastActiveTime;
 
     // @JsonIgnore

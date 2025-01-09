@@ -34,7 +34,7 @@ public class DashboardService {
 
     public List<Dashboard> getMyDashboards() {
         String userId = userService.getMyUserId();
-        return dashboardRepo.findByOwner(userId);
+        return dashboardRepo.findByOwner(userId).stream().filter(dashboard -> !dashboard.getIsDeviceSpecific()).toList();
     }
 
     public Dashboard getDashboardInfo(String id) throws IllegalAccessException {
@@ -66,7 +66,6 @@ public class DashboardService {
         return dashboardRepo.save(dashboard);
     }
 
-    // TODO: update react for change from DashboardData to Dashboard
     public Dashboard getDashboardData(String dashboardId) throws IllegalAccessException {
         Dashboard dashboard = dashboardRepo.findById(dashboardId).get();
         String access = getAccessLevel(dashboard);

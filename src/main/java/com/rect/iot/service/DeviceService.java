@@ -5,9 +5,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -76,9 +77,10 @@ public class DeviceService {
 
         Dashboard savedDashboard = dashboardRepo.save(Dashboard.builder()
                 .name(name)
-                .access("private")
+                .access("Private")
                 .dashboardDataId(savedDashboardData.getId())
                 .owner(userId)
+                .userAccess(new HashMap<String, String>())
                 .build());
 
         Device savedDevice = deviceRepo.save(Device.builder()
@@ -93,7 +95,9 @@ public class DeviceService {
                 .build());
 
         savedDashboard.setIsDeviceSpecific(true);
-        savedDashboard.setAssociatedDevices(Collections.singletonList(savedDevice.getId()));
+        Set<String> associatedDevices = new HashSet<String>();
+        associatedDevices.add(savedDevice.getId());
+        savedDashboard.setAssociatedDevices(associatedDevices);
         dashboardRepo.save(savedDashboard);
 
         return savedDevice;
@@ -111,7 +115,6 @@ public class DeviceService {
         throw new IllegalAccessException("User does not have access to this device");
     }
 
-    // TODO: change in react app
     // TODO: add method to update access and datastream
     public Device updateDeviceInfo(String id, Device newInfo, MultipartFile multipartImage)
             throws IllegalAccessException, IOException {
@@ -232,11 +235,16 @@ public class DeviceService {
 
         if (accessLevel.equals("Editor") || accessLevel.equals("Viewer")) {
             if (access.equals("Editor") || access.equals("Owner")) {
+                device.getUserAccess().put(userId, accessLevel);
+                deviceRepo.save(device);
+
+                Dashboard dashboard = dashboardRepo.findById(device.getDashboardId()).get();
+                dashboard.getUserAccess().put(userId, accessLevel);
+                dashboardRepo.save(dashboard);
+
                 User user = userRepo.findById(userId).get();
                 user.getSharedDevices().add(deviceId);
                 userRepo.save(user);
-                device.getUserAccess().put(userId, accessLevel);
-                deviceRepo.save(device);
                 return "ok";
             }
             return "fail";
@@ -249,11 +257,17 @@ public class DeviceService {
         String access = getAccessLevel(device);
 
         if (access.equals("Editor") || access.equals("Owner")) {
+            device.getUserAccess().remove(userId);
+            deviceRepo.save(device);
+
+            Dashboard dashboard = dashboardRepo.findById(device.getDashboardId()).get();
+            dashboard.getUserAccess().remove(userId);
+            dashboardRepo.save(dashboard);
+
             User user = userRepo.findById(userId).get();
             user.getSharedDevices().remove(deviceId);
             userRepo.save(user);
-            device.getUserAccess().remove(userId);
-            deviceRepo.save(device);
+            
             return "ok";
         }
         throw new IllegalAccessException("User does not have access to this device");
@@ -304,8 +318,7 @@ public class DeviceService {
                 fout.write(file.getBytes());
                 fout.close();
                 fileUploadStatus = "File Uploaded Successfully";
-                device.setIsUpToDate(false);
-                device.setVersion(version);
+                device.setTargetVersion(version);
                 deviceRepo.save(device);
             } catch (Exception e) {
                 e.printStackTrace();

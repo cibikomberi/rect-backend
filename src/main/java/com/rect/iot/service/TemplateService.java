@@ -78,7 +78,6 @@ public class TemplateService {
         throw new IllegalAccessException("User does not have access to this template");
     }
     
-    //TODO: change in react app
     //TODO: add method to update access and datastream
     public Template updateTemplateInfo(String id, Template newInfo, MultipartFile multipartImage) throws IllegalAccessException, IOException {
         Template template = templateRepo.findById(id).get();

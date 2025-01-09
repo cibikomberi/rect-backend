@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <HTTPUpdate.h>
-// #include <WiFi.h>
+#include <WiFi.h>
 
 WiFiClient wifiClient;
 void update();
