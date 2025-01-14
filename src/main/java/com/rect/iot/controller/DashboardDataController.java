@@ -10,26 +10,25 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.rect.iot.service.DashboardDataService;
 
 @Controller
+@CrossOrigin
 public class DashboardDataController {
     @Autowired
     private DashboardDataService dashboardDataService;
 
-    @MessageMapping("/dashboard/get/{deviceId}/{datastreamId}")
-    @SendTo("/topic/data/{deviceId}/{datastreamId}")
-    public Object resolveDashboardData(@DestinationVariable String deviceId, @DestinationVariable String datastreamId, String range, StompHeaderAccessor headerAccessor) {
+    @GetMapping("dashboard-data/{deviceId}/{datastreamId}/{range}")
+    @ResponseBody
+    public Object resolveDashboardData(@PathVariable String deviceId, @PathVariable String datastreamId, @PathVariable String range) {
         Map<String, Object> a = new HashMap<>();
         a.put("type", range);
         a.put("data", dashboardDataService.resolveDashboardData(deviceId, datastreamId, range));
-
-       
-        // String username = headerAccessor.getUser().getName();
-        
-
-        // messagingTemplate.convertAndSendToUser(username, "/topic/data/" + deviceId + "/" + datastreamId, a);
         return a;
     }
     
