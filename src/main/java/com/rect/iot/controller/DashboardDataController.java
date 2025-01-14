@@ -23,16 +23,18 @@ public class DashboardDataController {
     private SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/dashboard/get/{deviceId}/{datastreamId}")
-    public void resolveDashboardData(@DestinationVariable String deviceId, @DestinationVariable String datastreamId, String range, StompHeaderAccessor headerAccessor) {
+    @SendTo("/topic/data/{deviceId}/{datastreamId}")
+    public Object resolveDashboardData(@DestinationVariable String deviceId, @DestinationVariable String datastreamId, String range, StompHeaderAccessor headerAccessor) {
         Map<String, Object> a = new HashMap<>();
         a.put("type", range);
         a.put("data", dashboardDataService.resolveDashboardData(deviceId, datastreamId, range));
 
        
-        String username = headerAccessor.getUser().getName();
+        // String username = headerAccessor.getUser().getName();
         
 
-        messagingTemplate.convertAndSendToUser(username, "/topic/data/" + deviceId + "/" + datastreamId, a);
+        // messagingTemplate.convertAndSendToUser(username, "/topic/data/" + deviceId + "/" + datastreamId, a);
+        return a;
     }
     
     @MessageMapping("/dashboard/post/{deviceId}/{datastreamId}")
