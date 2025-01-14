@@ -52,12 +52,12 @@ public class UserService {
     }
 
     public String login(String email, String password) {
-        System.out.println(password);
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(email, password));
 
         if (authentication.isAuthenticated()) {
-            return jwtService.generateToken(email);
+            System.out.println();
+            return jwtService.generateToken(email, ((UserPrincipal) authentication.getPrincipal()).getId());
         }
         System.out.println("fail");
         return "fail";

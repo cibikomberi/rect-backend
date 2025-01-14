@@ -32,8 +32,9 @@ public class JWTService {
             
         // }
     }
-    public String generateToken(String username) {
+    public String generateToken(String username, String id) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("id", id);
         System.out.println("s"+secretKey);
 
         return Jwts.builder()
@@ -55,6 +56,11 @@ public class JWTService {
     public String extractUserName(String token) {
         // extract the username from jwt token
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public String getId(String token) {
+        final Claims claims = extractAllClaims(token);
+        return (String) claims.get("id");
     }
 
     private <T> T extractClaim(String token, Function<Claims, T> claimResolver) {

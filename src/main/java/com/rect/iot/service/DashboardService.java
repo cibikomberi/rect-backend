@@ -114,6 +114,17 @@ public class DashboardService {
         return dashboards;
     }
 
+    public boolean hasViewAccess(String dashboardId, String userId) {
+        Dashboard dashboard = dashboardRepo.findById(dashboardId).get();
+        return hasViewAccess(dashboard, userId);
+    }
+    public boolean hasViewAccess(Dashboard dashboard, String userId) {
+        if (dashboard.getOwner().equals(userId)) {
+            return true;
+        }
+        return dashboard.getUserAccess().get(userId) != null;
+    }
+
     private String getAccessLevel(Dashboard dashboard) {
         String userId = userService.getMyUserId();
 

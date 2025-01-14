@@ -19,8 +19,6 @@ import com.rect.iot.service.DashboardDataService;
 public class DashboardDataController {
     @Autowired
     private DashboardDataService dashboardDataService;
-@Autowired
-    private SimpMessagingTemplate messagingTemplate;
 
     @MessageMapping("/dashboard/get/{deviceId}/{datastreamId}")
     @SendTo("/topic/data/{deviceId}/{datastreamId}")

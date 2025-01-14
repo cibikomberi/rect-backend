@@ -1,5 +1,7 @@
 package com.rect.iot.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -7,54 +9,47 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.stereotype.Component;
 
+import com.rect.iot.model.Dashboard;
+import com.rect.iot.repository.DashboardRepo;
+import com.rect.iot.service.DashboardService;
+import com.rect.iot.service.JWTService;
+
 @Component
 public class SubscriptionValidationInterceptor implements ChannelInterceptor {
+    @Autowired
+    private JWTService jwtService;
+    @Autowired
+    private DashboardRepo dashboardRepo;
+    @Autowired
+    private DashboardService dashboardService;
 
     @Override
-    public Message<?> preSend(Message<?> message, MessageChannel channel) {
+    public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
 
         if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
-            String destination = accessor.getDestination(); // Topic/Queue being subscribed to
-            String token = accessor.getFirstNativeHeader("Authorization"); // Extract token
-
-            // if (!validateSubscription(token, destination)) {
-                //     throw new IllegalArgumentException("Unauthorized subscription to: " + destination);
-                // }
-                System.out.println("sub");
-                System.out.println(destination);
-                System.out.println(token);
+            String destination = accessor.getDestination();
+            if (destination == null) {
+                return null;
             }
-
+            String deviceId = destination.split("/")[3];
+            String token = accessor.getFirstNativeHeader("Authorization");
+            String dashboardId = accessor.getFirstNativeHeader("Dashboard");
+            if (dashboardId == null) {
+                return null;
+            }
+            if (token != null && token.startsWith("Bearer ")) {
+                token = token.substring(7);
+                String userId = jwtService.getId(token);
+                Dashboard dashboard = dashboardRepo.findById(dashboardId).get();
+                if (dashboardService.hasViewAccess(dashboard, userId)) {
+                    if (dashboard.getAssociatedDevices().contains(deviceId)) {
+                        return message;
+                    }
+                }
+            }
+            return null;
+        }
         return message;
-    }
-
-    private boolean validateSubscription(String token, String destination) {
-        // Example logic: Validate token and check permissions for the destination
-        if (token == null || !validateToken(token)) {
-            return false;
-        }
-
-        // Check if the user is allowed to subscribe to this destination
-        String userRole = extractUserRoleFromToken(token);
-        return hasAccess(userRole, destination);
-    }
-
-    private boolean validateToken(String token) {
-        // Token validation logic here
-        return true; // Replace with actual validation
-    }
-
-    private String extractUserRoleFromToken(String token) {
-        // Extract user role from token
-        return "USER"; // Replace with actual logic
-    }
-
-    private boolean hasAccess(String role, String destination) {
-        // Role-based access control for destinations
-        if ("USER".equals(role) && destination.startsWith("/topic/private")) {
-            return false; // Restrict USERS from accessing private topics
-        }
-        return true;
     }
 }
