@@ -2,6 +2,7 @@ package com.rect.iot.controller;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -42,7 +43,7 @@ public class DeviceController {
     }
 
     @PostMapping("/device")
-    public Device createDevice(@RequestBody ObjectNode json) {
+    public Device createDevice(@RequestBody ObjectNode json) throws IllegalAccessException {
         return deviceService.createDevice(json.get("name").asText(), json.get("board").asText(), json.get("templateId").asText());
     }
 
@@ -104,11 +105,27 @@ public class DeviceController {
         return deviceService.saveOta(deviceId, file, json.get("version").asText())        ;
     }
 
+    @GetMapping("/device/versions/{deviceId}")
+    public List<String> getAvailableVersions(@PathVariable String deviceId) throws IllegalAccessException{
+        return deviceService.getAvailableVersions(deviceId);
+    }
+
     @PostMapping("/device/constants/{deviceId}/{version}")
-    public String saveDeviceConstants(@PathVariable String deviceId,@PathVariable String version , @RequestBody String data) throws IllegalAccessException {
+    public String saveDeviceConstants(@PathVariable String deviceId, @PathVariable String version , @RequestBody String data) throws IllegalAccessException {
+        System.out.println(data);
         return deviceService.saveDeviceConstants(deviceId, version, data);
     }
+
+    @GetMapping("/device/constants/{deviceId}/{version}")
+    public String getDeviceConstants(@PathVariable String deviceId, @PathVariable String version) throws IllegalAccessException {
+        return deviceService.getDeviceConstants(deviceId, version);
+    }
     
+    @GetMapping("/vs/device/constants/{deviceId}")
+    public Map<String, String> getDeviceConstantsVS(@PathVariable String deviceId) throws IllegalAccessException {
+        return deviceService.getDeviceConstantsVS(deviceId);
+    }
+
     @GetMapping("/friends")
     public List<User> getMyFriends(@RequestParam String param) {
         return deviceService.getFriends(param);

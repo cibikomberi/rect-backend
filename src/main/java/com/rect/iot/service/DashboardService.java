@@ -49,6 +49,7 @@ public class DashboardService {
     public Dashboard createDashboard(Dashboard newDashboard) {
         String userId = userService.getMyUserId();
         DashboardData data = DashboardData.builder()
+        .days("1")
                 .layout(new ArrayList<>())
                 .widgetData(new HashMap<String, Widget>())
                 .build();
@@ -93,6 +94,16 @@ public class DashboardService {
         }
         throw new IllegalAccessException("User does not have access to this device");
     }
+
+    public List<Device> getDevices(String dashboardId) throws IllegalAccessException {
+        Dashboard dashboard = dashboardRepo.findById(dashboardId).get();
+        String access = getAccessLevel(dashboard);
+        if (access.equals("Viewer") || access.equals("Editor") || access.equals("Owner")) {
+            return deviceRepo.findAllById(dashboard.getAssociatedDevices());
+        }
+        throw new IllegalAccessException("User does not have access to this device");
+    }
+
     //TODO: verify datastreams in data
     public DashboardData updateDashboardData(String dashboardId, DashboardData data) throws IllegalAccessException {
         Dashboard dashboard = dashboardRepo.findById(dashboardId).get();
@@ -100,6 +111,7 @@ public class DashboardService {
         if (access.equals("Viewer") || access.equals("Editor") || access.equals("Owner")) {
             return dashboardDataRepo.save(DashboardData.builder()
                     .id(dashboard.getDashboardDataId())
+                    .days(data.getDays())
                     .layout(data.getLayout())
                     .widgetData(data.getWidgetData())
                     .build());

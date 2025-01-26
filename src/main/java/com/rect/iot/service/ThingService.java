@@ -22,17 +22,21 @@ import org.springframework.stereotype.Service;
 
 import com.rect.iot.model.Datastream;
 import com.rect.iot.model.ThingData;
+import com.rect.iot.model.ThingLog;
 import com.rect.iot.model.device.Device;
 import com.rect.iot.model.device.DeviceMetadata;
 import com.rect.iot.model.dto.ChartDataDTO;
 import com.rect.iot.repository.DeviceMetadataRepo;
 import com.rect.iot.repository.DeviceRepo;
 import com.rect.iot.repository.ThingDataRepo;
+import com.rect.iot.repository.ThingLogRepo;
 
 @Service
 public class ThingService {
     @Autowired
     private ThingDataRepo thingDataRepo;
+    @Autowired
+    private ThingLogRepo thingLogRepo;
     @Autowired
     private DeviceRepo deviceRepo;
     @Autowired
@@ -40,7 +44,7 @@ public class ThingService {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-    public List<String> logData(String deviceId, Map<String, ?> dataMap) {
+    public List<String> saveThingData(String deviceId, Map<String, ?> dataMap) {
         Device device = deviceRepo.findById(deviceId).get();
         device.setLastActiveTime(LocalDateTime.now());
         deviceRepo.save(device);
@@ -88,6 +92,22 @@ public class ThingService {
             }
         }
         return invalidKeys;
+    }
+
+    public ThingLog saveThingLog(String log, String type, String deviceId) {
+        ThingLog saved = thingLogRepo.save(ThingLog.builder()
+                .log(log)
+                .type(type)
+                .deviceId(deviceId)
+                .time(LocalDateTime.now())
+                .build());
+
+        Map<String, Object> a = new HashMap<>();
+                a.put("type", "update");
+                a.put("data", saved);
+                messagingTemplate.convertAndSend("/topic/data/" + deviceId + "/rect-log", a);
+
+        return saved;
     }
 
     public ResponseEntity<?> updateThing(String deviceId, String version) throws IOException {

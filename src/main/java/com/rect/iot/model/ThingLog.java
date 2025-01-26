@@ -2,8 +2,6 @@ package com.rect.iot.model;
 
 import java.time.LocalDateTime;
 
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import lombok.AllArgsConstructor;
@@ -16,16 +14,11 @@ import lombok.NoArgsConstructor;
 @Document
 @NoArgsConstructor
 @AllArgsConstructor
-public class VersionControl {
-    @Id
+public class ThingLog {
     private String id;
 
-    private String version;
-    private String enviroinment;
-    private String description;
-
-    private String templateId;
-
-    @CreatedDate
-    private LocalDateTime createDate;
+    private String deviceId;
+    private LocalDateTime time;
+    private String type;
+    private String log;
 }

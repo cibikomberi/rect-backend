@@ -10,14 +10,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import com.rect.iot.controller.MqttEventListener;
 import com.rect.iot.model.Datastream;
 import com.rect.iot.model.ThingData;
+import com.rect.iot.model.ThingLog;
 import com.rect.iot.model.device.Device;
 import com.rect.iot.model.device.DeviceMetadata;
 import com.rect.iot.model.dto.ChartDataDTO;
 import com.rect.iot.repository.DeviceMetadataRepo;
 import com.rect.iot.repository.DeviceRepo;
 import com.rect.iot.repository.ThingDataRepo;
+import com.rect.iot.repository.ThingLogRepo;
 
 @Service
 public class DashboardDataService {
@@ -27,44 +30,36 @@ public class DashboardDataService {
     @Autowired
     private DeviceRepo deviceRepo;
     @Autowired
+    private ThingService thingService;
+    @Autowired
     private DeviceMetadataRepo deviceMetadataRepo;
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+    @Autowired
+    private MqttEventListener mqtt;
+    @Autowired
+    private ThingLogRepo thingLogRepo;
+
     // @Autowired
     // private DeviceMetadataRepo deviceMetadataRepo;
-
+//TODO : conditional range
     public Object resolveDashboardData(String deviceId, String datastreamId, String range ) {
-        // DashboardData data = dashboardDataRepo.findById(dashboardId).get();
-        // Widget widgetData = data.getWidgetData().get(widgetId);
-        // String widgetType = widgetData.getClass().getSimpleName();
-        // System.out.println(widgetType);
         if (!range.equals("last")) {
+            int days = Integer.parseInt(range);
             ArrayList<ChartDataDTO> chartData = new ArrayList<>();
-            // Device device = deviceRepo.findById(deviceId).get();
-            // DeviceMetadata metadata = deviceMetadataRepo.findById(device.getMetadataId()).get();
-            // metadata.
-            // if (widgetData.getDatastream().size() > 0) {
-            //     List<Datastream> datastreams =  widgetData.getDatastream();
-            //     System.out.println(datastreams);
-            //     datastreams.stream().forEach(datastream -> {
-                    List<ThingData<?>> a = thingDataRepo.findByDeviceIdAndDatastreamId(deviceId, datastreamId);
+            if (datastreamId.equals("rect-log")) {
+                System.out.println(LocalDateTime.now().minusDays(days));
+                return thingLogRepo.findByDeviceIdAndTimeAfter(deviceId, LocalDateTime.now().minusDays(days));
+            }
+                    List<ThingData<?>> a = thingDataRepo.findByDeviceIdAndDatastreamIdAndDateTimeAfter(deviceId, datastreamId, LocalDateTime.now().minusDays(days));
                     a.stream().forEach(b -> chartData.add(ChartDataDTO.builder()
                             .dateTime(b.getDateTime())
                             .value(b.getValue())
                             .build()));
-                // });
-            // }
             return chartData;
         } else {
-            // if (widgetData.getDatastream().size() > 0) {
-                // Datastream datastream =  widgetData.getDatastream().get(0);
-                // System.out.println(datastream);
                 Object a = thingDataRepo.findFirstByDeviceIdAndDatastreamIdOrderByDateTimeDesc(deviceId, datastreamId).getValue();
-                System.out.println(datastreamId); 
-                System.out.println(a);
                 return a;
-            // }
-            // return null;
         }
     }
 
@@ -72,6 +67,11 @@ public class DashboardDataService {
         Device device = deviceRepo.findById(deviceId).get();
         DeviceMetadata metadata = deviceMetadataRepo.findById(device.getMetadataId()).get();
         List<Datastream> datastreams = metadata.getDatastreams();
+
+        if (datastreamId.equals("rect-log")) {
+            ThingLog thingLog = thingService.saveThingLog("[USER] " + dataIn, "User", deviceId);
+            mqtt.sendMessage("rect/device/" + deviceId + "/command", dataIn, false);
+        }
         
         if (datastreams.size() > 0) {
             int index =  metadata.getDatastreams().indexOf(Datastream.builder().identifier(datastreamId).build());
@@ -81,10 +81,16 @@ public class DashboardDataService {
                 if (datastream.getType().equals("Integer")) {
                     parsedData = Integer.parseInt(dataIn);
                 } else if (datastream.getType().equals("Float")) {
-                    parsedData = Float.parseFloat(dataIn);   
+                    parsedData = Float.parseFloat(dataIn);
+                    
                 } else {
                     parsedData = dataIn;
                 }
+                HashMap<String, Object> payload = new HashMap<>();
+                payload.put("id", datastreamId);
+                payload.put("data", parsedData);
+                mqtt.sendMessage("rect/device/" + deviceId + "/data", payload, false);
+ 
                 ThingData<?> savedData = thingDataRepo.save(ThingData.builder()
                                 .datastreamId(datastreamId)
                                 .deviceId(deviceId)

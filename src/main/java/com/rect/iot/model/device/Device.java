@@ -28,7 +28,9 @@ public class Device {
     private String description;
 
     private Boolean inheritTemplate;
-    private String currentVersion;
+    // private Boolean inheritDashboardFromTemplate;
+    @Builder.Default
+    private String currentVersion = "";
     @JsonIgnore
     private String targetVersion;
     private LocalDateTime lastActiveTime;
@@ -55,6 +57,6 @@ public class Device {
 
     private String image;
 
-
+    @JsonIgnore
     private String apiKey;
 }

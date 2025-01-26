@@ -1,11 +1,12 @@
 package com.rect.iot.service;
 
-
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
+import java.util.Map.Entry;
 
 import javax.naming.directory.InvalidAttributesException;
 
@@ -14,7 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.rect.iot.controller.MqttEventListener;
 import com.rect.iot.model.BuildErrors;
+import com.rect.iot.model.BuildJob;
 import com.rect.iot.model.Datastream;
 import com.rect.iot.model.Image;
 import com.rect.iot.model.Template;
@@ -24,6 +27,8 @@ import com.rect.iot.model.device.Device;
 import com.rect.iot.model.node.Flow;
 import com.rect.iot.model.template.TemplateMetadata;
 import com.rect.iot.repository.BuildErrorRepo;
+import com.rect.iot.repository.BuildJobRepo;
+import com.rect.iot.repository.DeviceMetadataRepo;
 import com.rect.iot.repository.DeviceRepo;
 import com.rect.iot.repository.FlowRepo;
 import com.rect.iot.repository.ImageRepo;
@@ -34,14 +39,13 @@ import com.rect.iot.repository.VersionControlRepo;
 
 import lombok.AllArgsConstructor;
 
-
-
 @Service
 @AllArgsConstructor
 public class TemplateService {
 
     private TemplateRepo templateRepo;
     private DeviceRepo deviceRepo;
+    private DeviceMetadataRepo deviceMetadataRepo;
     private TemplateMetadataRepo templateMetadataRepo;
     private FlowRepo flowRepo;
     private UserService userService;
@@ -50,6 +54,8 @@ public class TemplateService {
     private VersionControlRepo versionControlRepo;
     private BuildService buildService;
     private BuildErrorRepo buildErrorRepo;
+    private BuildJobRepo buildJobRepo;
+    private MqttEventListener mqtt;
 
     public List<Template> getMyTemplates() {
         String userId = userService.getMyUserId();
@@ -80,9 +86,9 @@ public class TemplateService {
         }
         throw new IllegalAccessException("User does not have access to this template");
     }
-    
-    //TODO: add method to update access and datastream
-    public Template updateTemplateInfo(String id, Template newInfo, MultipartFile multipartImage) throws IllegalAccessException, IOException {
+
+    public Template updateTemplateInfo(String id, Template newInfo, MultipartFile multipartImage)
+            throws IllegalAccessException, IOException {
         Template template = templateRepo.findById(id).get();
         String access = getAccessLevel(template);
 
@@ -103,11 +109,11 @@ public class TemplateService {
         }
         throw new IllegalAccessException("User does not have access to this template");
     }
-    
-    public TemplateMetadata getTemplateMetadata(String id) throws IllegalAccessException{
+
+    public TemplateMetadata getTemplateMetadata(String id) throws IllegalAccessException {
         Template template = templateRepo.findById(id).get();
         String access = getAccessLevel(template);
-        
+
         if (access.equals("Viewer") || access.equals("Editor") || access.equals("Owner")) {
             TemplateMetadata metadata = templateMetadataRepo.findById(template.getMetadataId()).get();
             metadata.setUserAccess(template.getUserAccess());
@@ -115,7 +121,6 @@ public class TemplateService {
         }
         throw new IllegalAccessException("User does not have access to this template");
     }
-                        // TODO: need to update the device too
 
     public Datastream addDatastream(String templateId, Datastream datastream) throws IllegalAccessException {
         Template template = templateRepo.findById(templateId).get();
@@ -126,7 +131,8 @@ public class TemplateService {
             List<Datastream> existingDatastreams = metadata.getDatastreams();
             if (!existingDatastreams.contains(datastream)) {
                 existingDatastreams.add(datastream);
-                templateMetadataRepo.save(metadata);
+                var saved = templateMetadataRepo.save(metadata);
+                updateDeviceDatastreams(saved.getDatastreams(), templateId);
                 return datastream;
             }
             throw new IllegalAccessException("Id already exists");
@@ -156,14 +162,9 @@ public class TemplateService {
                         templateMetadataRepo.save(metadata);
                         return datastream;
                     } else {
-                        // TODO: need to update the device too
-                        // List<ThingData<?>> deleted = thingDataRepo.deleteByDeviceIdAndDatastreamId(deviceId,
-                        //         datastreamId);
-                        // System.out.println("deleted");
-                        // System.out.println(deleted);
-                        // datastream.setDeviceId(deviceId);
                         existingDatastreams.set(i, datastream);
-                        templateMetadataRepo.save(metadata);
+                        var saved = templateMetadataRepo.save(metadata);
+                        updateDeviceDatastreams(saved.getDatastreams(), templateId);
                         return datastream;
                     }
                 }
@@ -174,9 +175,8 @@ public class TemplateService {
         throw new IllegalAccessException("User does not have access to this device");
     }
 
-    //TODO need to update devices
-    public String deleteDatastream(String deviceId, String datastreamId) throws IllegalAccessException {
-        Template template = templateRepo.findById(deviceId).get();
+    public String deleteDatastream(String templateId, String datastreamId) throws IllegalAccessException {
+        Template template = templateRepo.findById(templateId).get();
         String access = getAccessLevel(template);
 
         if (access.equals("Editor") || access.equals("Owner")) {
@@ -185,13 +185,28 @@ public class TemplateService {
             for (int i = 0; i < existingDatastreams.size(); i++) {
                 if (existingDatastreams.get(i).getIdentifier().equals(datastreamId)) {
                     existingDatastreams.remove(i);
-                    templateMetadataRepo.save(metadata);
+                    var saved = templateMetadataRepo.save(metadata);
+                    updateDeviceDatastreams(saved.getDatastreams(), templateId);
                     return "ok";
                 }
             }
             return "Invalid id";
         }
         throw new IllegalAccessException("User does not have access to this device");
+    }
+
+    private void updateDeviceDatastreams(List<Datastream> datastreams, String templateId) {
+        List<Device> devices = deviceRepo.findByTemplateIdAndInheritTemplate(templateId, true);
+        deviceMetadataRepo.saveAll(deviceMetadataRepo.findAllById(
+                devices.stream()
+                        .map(device -> device.getMetadataId())
+                        .toList())
+                .stream()
+                .map(metadata -> {
+                    metadata.setDatastreams(datastreams);
+                    return metadata;
+                })
+                .toList());
     }
 
     public String updateUserAccess(String templateId, String userId, String accessLevel) throws IllegalAccessException {
@@ -243,30 +258,65 @@ public class TemplateService {
         throw new IllegalAccessException("User does not have access to this template");
     }
 
-    public VersionControl createTemplateVersions(String templateId, String version, String description) throws IllegalAccessException {
+    public VersionControl createTemplateVersions(String templateId, String version, String description, String enviroinment)
+            throws IllegalAccessException {
         Template template = templateRepo.findById(templateId).get();
         String access = getAccessLevel(template);
         if (access.equals("Editor") || access.equals("Owner")) {
             return versionControlRepo.save(VersionControl.builder()
-                .templateId(templateId)
-                .version(version)
-                .description(description)
-                .createDate(LocalDateTime.now())
-                .build());
+                    .templateId(templateId)
+                    .version(version)
+                    .enviroinment(enviroinment)
+                    .description(description)
+                    .createDate(LocalDateTime.now())
+                    .build());
         }
         throw new IllegalAccessException("User does not have access to this template");
     }
 
-    public String updateBuild(String templateId, String version, String type) throws InvalidAttributesException, IllegalAccessException, IOException, InterruptedException {
+    public String updateBuild(String templateId, String version, String type) throws InvalidAttributesException, IllegalAccessException {
         Template template = templateRepo.findById(templateId).get();
+        return updateBuild(template, version, type);
+    }
+
+    public String reBuild(String templateId) throws InvalidAttributesException, IllegalAccessException {
+        Template template = templateRepo.findById(templateId).get();
+        return updateBuild(template, template.getBuildVersion(), "Build");
+    }
+
+    public String updateBuild(Template template, String version, String type)
+            throws InvalidAttributesException, IllegalAccessException {
         String access = getAccessLevel(template);
         if (access.equals("Editor") || access.equals("Owner")) {
-            if ("Prod".equals(type)) {
-                template.setProductionVersion(version);
+            if ("Build".equals(type)) {
+                template.setBuildVersion(version);
                 templateRepo.save(template);
-                List<Device> devicesToUpdate = deviceRepo.findByTemplateIdAndInheritTemplate(templateId, true);
+                Optional<BuildJob> job = buildJobRepo.findById(template.getId());
+                BuildJob buildJob;
+                if (job.isPresent()) {
+                    buildJob = job.get();
+                    for (Entry<String, String> deviceEntry : buildJob.getDevices().entrySet()) {
+                        if (deviceEntry.getValue().equals("Started")) {
+                            throw new InvalidAttributesException("A build is already in progress");
+                        }
+                    }
+                } else { 
+                    buildJob = new BuildJob();
+                }
+
+                List<Device> devicesToUpdate = deviceRepo.findByTemplateIdAndInheritTemplate(template.getId(), true);
+
+                buildJob.setId(template.getId());
+                buildJob.setDevices(new HashMap<>());
+                buildErrorRepo.deleteAllByTemplateId(template.getId());
                 for (Device device : devicesToUpdate) {
-                    buildService.buildProject(templateId, device, version);
+                    buildJob.getDevices().put(device.getId(), "Started");
+                }
+                buildJobRepo.save(buildJob);
+
+                VersionControl versionControl = versionControlRepo.findByTemplateIdAndVersion(template.getId(), version);
+                for (Device device : devicesToUpdate) {
+                    buildService.buildProject(template.getId(), device, version, versionControl.getEnviroinment(), false);
                 }
                 return "ok";
             }
@@ -280,13 +330,52 @@ public class TemplateService {
         throw new IllegalAccessException("User does not have access to this template");
     }
 
-        public List<BuildErrors> getBuildErrors(String templateId) {
-            List<BuildErrors> errors =  buildErrorRepo.findByTemplateId(templateId);
+    public BuildJob getBuildStatus(String templateId) throws IllegalAccessException {
+        Template template = templateRepo.findById(templateId).get();
+        String access = getAccessLevel(template);
+        if (access.equals("Editor") || access.equals("Owner")) {
+            Optional<BuildJob> buildJob = buildJobRepo.findById(templateId);
+            if (buildJob.isPresent()) {
+                return buildJob.get();
+            }
+            return null;
+        }
+        throw new IllegalAccessException("User does not have access to this template");
+    }
+
+    public List<BuildErrors> getBuildErrors(String templateId) throws IllegalAccessException {
+        Template template = templateRepo.findById(templateId).get();
+        String access = getAccessLevel(template);
+        if (access.equals("Editor") || access.equals("Owner")) {
+            List<BuildErrors> errors = buildErrorRepo.findByTemplateId(templateId);
             for (BuildErrors error : errors) {
                 error.setDeviceName(deviceRepo.findById(error.getDeviceId()).get().getName());
             }
             return errors;
         }
+        throw new IllegalAccessException("User does not have access to this template");
+    }
+
+    public String deployTemplate(String templateId) throws InvalidAttributesException, IllegalAccessException {
+        Template template = templateRepo.findById(templateId).get();
+        String access = getAccessLevel(template);
+        if (access.equals("Editor") || access.equals("Owner")) {
+            BuildJob buildJob = buildJobRepo.findById(templateId).get();
+            for (Entry<String, String> deviceEntry : buildJob.getDevices().entrySet()) {
+                if (!deviceEntry.getValue().equals("Success")) {
+                    throw new InvalidAttributesException("Build not completed");
+                }
+            }
+            for (Entry<String, String> deviceEntry : buildJob.getDevices().entrySet()) {
+                mqtt.sendMessage("rect/" + deviceEntry.getKey() + "/ota", template.getBuildVersion(), true);
+            }
+
+            template.setProductionVersion(template.getBuildVersion());
+            templateRepo.save(template);
+            return "ok";
+        }
+        throw new IllegalAccessException("User does not have access to this template");
+    }
 
     public ResponseEntity<byte[]> resolveImage(String id) {
         Image image = imageRepo.findById(id).get();
@@ -314,7 +403,7 @@ public class TemplateService {
         System.out.println(template);
 
         if (template.getFlowId() == null) {
-        System.out.println("flow");
+            System.out.println("flow");
 
             return Flow.builder().edges(new ArrayList<>()).nodes(new ArrayList<>()).build();
             // return null;

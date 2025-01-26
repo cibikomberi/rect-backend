@@ -21,6 +21,7 @@ import lombok.NoArgsConstructor;
 public class DashboardData {
     @Id
     String id;
+    String days;
     List<Layout> layout;
     Map<String, Widget> widgetData;
 }

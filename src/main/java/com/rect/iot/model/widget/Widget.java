@@ -29,7 +29,9 @@ import lombok.Setter;
     @JsonSubTypes.Type(value = LineChartWidget.class, name = "LineChart"),
     @JsonSubTypes.Type(value = NumberInputWidget.class, name = "NumberInput"),
     @JsonSubTypes.Type(value = SliderWidget.class, name = "Slider"),
-    @JsonSubTypes.Type(value = ToggleWidget.class, name = "Toggle")
+    @JsonSubTypes.Type(value = ToggleWidget.class, name = "Toggle"),
+    @JsonSubTypes.Type(value = LabelWidget.class, name = "Label"),
+    @JsonSubTypes.Type(value = LogWidget.class, name = "Log")
 })
 public abstract class Widget {
     private String label;

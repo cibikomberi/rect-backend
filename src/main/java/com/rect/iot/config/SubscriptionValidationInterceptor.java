@@ -40,7 +40,7 @@ public class SubscriptionValidationInterceptor implements ChannelInterceptor {
             }
             if (token != null && token.startsWith("Bearer ")) {
                 token = token.substring(7);
-                String userId = jwtService.getId(token);
+                String userId = jwtService.extractId(token);
                 Dashboard dashboard = dashboardRepo.findById(dashboardId).get();
                 if (dashboardService.hasViewAccess(dashboard, userId)) {
                     if (dashboard.getAssociatedDevices().contains(deviceId)) {

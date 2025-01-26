@@ -3,9 +3,11 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-Code/
+/Code
+/temp
 temp/
-
+/temp/
+temp
 ### STS ###
 .apt_generated
 .classpath

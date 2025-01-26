@@ -41,7 +41,7 @@ public class AuthHandshakeInterceptor implements HandshakeInterceptor {
         if (dashboardService.hasViewAccess(dashboardId, user.getId())) {
             return true;
         }
-        return true;
+        return false;
     }
 
     @Override

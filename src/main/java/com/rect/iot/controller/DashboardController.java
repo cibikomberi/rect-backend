@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.rect.iot.model.Dashboard;
 import com.rect.iot.model.Datastream;
+import com.rect.iot.model.device.Device;
 import com.rect.iot.model.widget.DashboardData;
 import com.rect.iot.service.DashboardService;
 
@@ -50,7 +51,12 @@ public class DashboardController {
     @GetMapping("/dashboard/datastreams/{dashboardId}")
     public List<Datastream> getDatastreams(@PathVariable String dashboardId) throws IllegalAccessException {
         return dashboardService.getDatastreams(dashboardId);
-    }   
+    }
+    
+    @GetMapping("/dashboard/devices/{dashboardId}")
+    public List<Device> getDevices(@PathVariable String dashboardId) throws IllegalAccessException {
+        return dashboardService.getDevices(dashboardId);
+    }
 
     @PutMapping("/dashboard/data/{dashboardId}")
     public DashboardData updateDashboardData(@PathVariable String dashboardId, @RequestBody DashboardData data) throws IllegalAccessException {

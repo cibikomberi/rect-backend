@@ -1,7 +1,9 @@
 package com.rect.iot.service;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -15,12 +17,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.rect.iot.model.AuthToken;
 import com.rect.iot.model.Image;
 import com.rect.iot.model.User;
 import com.rect.iot.model.UserPrincipal;
+import com.rect.iot.repository.AuthTokenRepo;
 import com.rect.iot.repository.ImageRepo;
 import com.rect.iot.repository.UserRepo;
-
 
 @Service
 public class UserService {
@@ -32,6 +35,8 @@ public class UserService {
     private AuthenticationManager authenticationManager;
     @Autowired
     private JWTService jwtService;
+    @Autowired
+    private AuthTokenRepo authTokenRepo;
 
     BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(10);
 
@@ -45,28 +50,54 @@ public class UserService {
             user.setSharedDevices(new HashSet<>());
             user.setSharedTemplates(new HashSet<>());
             user.setSharedDashboards(new HashSet<>());
-            
+
             return userRepo.save(user);
         }
         throw new DuplicateKeyException("User already exists");
     }
 
-    public String login(String email, String password) {
+    public Map<String, String> login(String email, String password) {
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(email, password));
 
         if (authentication.isAuthenticated()) {
-            System.out.println();
-            return jwtService.generateToken(email, ((UserPrincipal) authentication.getPrincipal()).getId());
+            String userId = ((UserPrincipal) authentication.getPrincipal()).getId();
+            String jwt = jwtService.generateToken(email, userId,
+                    ((UserPrincipal) authentication.getPrincipal()).getRole());
+            String authToken = jwtService.generateAuthToken(email, userId,
+                    ((UserPrincipal) authentication.getPrincipal()).getRole());
+
+            authTokenRepo.save(AuthToken.builder()
+                    .token(authToken)
+                    .userId(userId)
+                    .build());
+
+            Map<String, String> tokens = new HashMap<>();
+            tokens.put("jwt", jwt);
+            tokens.put("authToken", authToken);
+            return tokens;
         }
         System.out.println("fail");
-        return "fail";
+        return null;
+    }
+
+    public String refreshToken(String token) {
+        System.out.println(token);
+        AuthToken authToken = authTokenRepo.findByToken(token);
+        if (authToken != null) {
+            return jwtService.generateToken(
+                    jwtService.extractUserName(token),
+                    jwtService.extractId(token),
+                    jwtService.extracRole(token));
+        }
+        System.out.println("fail");
+        return null;
     }
 
     public User whoAmI() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        User user = userRepo.findByEmail(principal.getEmail());
+        String userId = (String) authentication.getPrincipal();
+        User user = userRepo.findById(userId).get();
         return user;
     }
 
@@ -77,14 +108,13 @@ public class UserService {
 
     public String getMyUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
-        return principal.getId();
+        return (String) authentication.getPrincipal();
     }
 
     public String updateProfile(String name, Long phone, MultipartFile image) throws IOException {
         User user = whoAmI();
         if (image != null) {
-            if ( user.getImageId() == null) {
+            if (user.getImageId() == null) {
                 Image profileImage = new Image();
                 profileImage.setImageType(image.getContentType());
                 profileImage.setContent(image.getBytes());
@@ -94,7 +124,7 @@ public class UserService {
                 profileImage.setImageType(image.getContentType());
                 profileImage.setContent(image.getBytes());
                 imageRepo.save(profileImage);
-            } 
+            }
         }
 
         user.setName(name);

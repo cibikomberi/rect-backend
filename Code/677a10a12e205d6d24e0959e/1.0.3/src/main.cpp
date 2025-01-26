@@ -1,36 +1,34 @@
 #include <Arduino.h>
-#include <HTTPUpdate.h>
-#include <WiFi.h
+#include "device_constants.h"
 
-WiFiClient wifiClient
-void update();
-void setup()
-{
-  // put your setup code here, to run once:
-  pinMode(2, OUTPUT);
-  WiFi.begin("BIT-ENERGY", "pic-embedded");
+#include <Rect.h>
+#include <WiFi.h>
+#include <WifiClient.h>
+
+  WiFiClient client;
+  Rect rect;
+
+void dsaHandler(float val) {
+  Serial.println(val);
+  analogWrite(2, val);
 }
 
-uint32_t updateCounter = 0
+std::string commandHandler(String command) {
+  Serial.println(command);
+  return "OK";
+}
 
-void loop()
-{
-  // put your main code here, to run repeatedly:
-  digitalWrite(2, 1);
-  delay(250);
-  digitalWrite(2 , 0)
-  delay(250);
+void setup() {
+  Serial.begin(115200);
+  pinMode(2, OUTPUT);
+  WiFi.begin("test", "12345678");
+  rect.begin(client, RECT_API_KEY, RECT_DEVICE_ID, "0.1");
+  rect.registerCallback("dsa", dsaHandler);
+  rect.registerCommandProcessor(commandHandler);
+}
 
-
-      update();
-    }
-
-
-
-
-void update()
-{
-  String url = "http://cibikomberi.local:8080/thing/update/677367065ee782724fdba1a4?version=2";
-
-  httpUpdate.update(wifiClient, url);
+void loop() {
+  rect.loop();
+  rect.put("dsa4", String(150 - touchRead(4)));
+  delay(500);
 }

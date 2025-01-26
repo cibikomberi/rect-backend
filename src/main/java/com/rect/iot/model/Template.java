@@ -28,6 +28,7 @@ public class Template {
 
     private String productionVersion;
     private String devVersion;
+    private String buildVersion;
 
     @Transient
     private String myAccess;

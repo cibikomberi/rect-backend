@@ -23,8 +23,8 @@ public class ThingController {
     private ThingService thingService;
     
     @PostMapping("/thing/log/{deviceId}")
-    public ResponseEntity<?> logData(@PathVariable String deviceId, @RequestBody Map<String, ?> dataMap) {
-        List<String> invalidKeys = thingService.logData(deviceId, dataMap);
+    public ResponseEntity<?> saveThingData(@PathVariable String deviceId, @RequestBody Map<String, ?> dataMap) {
+        List<String> invalidKeys = thingService.saveThingData(deviceId, dataMap);
         if (invalidKeys == null) {
             return new ResponseEntity<>(HttpStatus.OK);            
         }

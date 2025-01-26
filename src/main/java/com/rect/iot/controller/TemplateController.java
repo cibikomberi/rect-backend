@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.rect.iot.model.BuildErrors;
+import com.rect.iot.model.BuildJob;
 import com.rect.iot.model.Datastream;
 import com.rect.iot.model.Template;
 import com.rect.iot.model.VersionControl;
@@ -100,21 +101,33 @@ public class TemplateController {
 
     @PostMapping("/template/version-control/{templateId}")
     public VersionControl createTemplateVersions(@PathVariable String templateId, @RequestBody JsonNode json) throws IllegalAccessException {
-        return templateService.createTemplateVersions(templateId, json.get("version").asText(), json.get("description").asText());
+        return templateService.createTemplateVersions(templateId, json.get("version").asText(), json.get("description").asText(), json.get("enviroinment").asText());
     }
 
     @PostMapping("/template/build/{templateId}")
     public String updateBuild(@PathVariable String templateId, @RequestBody JsonNode json) throws InvalidAttributesException, IllegalAccessException, IOException, InterruptedException {
         return templateService.updateBuild(templateId, json.get("version").asText(), json.get("type").asText());
     }
+    @PostMapping("/template/rebuild/{templateId}")
+    public String reBuild(@PathVariable String templateId) throws InvalidAttributesException, IllegalAccessException, IOException, InterruptedException {
+        return templateService.reBuild(templateId);
+    }
 
-    @GetMapping("/template/build/errors/{templateId}")
-    public List<BuildErrors> getBuildErrors(@PathVariable String templateId) {
-        return templateService.getBuildErrors(templateId);
+    @GetMapping("/template/build/status/{templateId}")
+    public BuildJob getBuildStatus(@PathVariable String templateId) throws IllegalAccessException {
+        return templateService.getBuildStatus(templateId);
     }
     
-    
+    @GetMapping("/template/build/errors/{templateId}")
+    public List<BuildErrors> getBuildErrors(@PathVariable String templateId) throws IllegalAccessException {
+        return templateService.getBuildErrors(templateId);
+    }
 
+    @PostMapping("/template/deploy/{templateId}")
+    public String deployTemplate(@PathVariable String templateId) throws InvalidAttributesException, IllegalAccessException {
+        return templateService.deployTemplate(templateId);
+    }
+    
     @GetMapping("/template/image/{id}")
     public ResponseEntity<byte[]> resolveImage(@PathVariable String id){
         return templateService.resolveImage(id);

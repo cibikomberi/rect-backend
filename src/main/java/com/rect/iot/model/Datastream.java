@@ -1,7 +1,5 @@
 package com.rect.iot.model;
 
-import org.springframework.data.annotation.Transient;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,10 +11,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Datastream {
     private String deviceId;
-
-    @Transient
     private String deviceName;
-    
+
     private String identifier;
     private String name;
     private String type;

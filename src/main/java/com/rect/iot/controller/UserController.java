@@ -1,6 +1,7 @@
 package com.rect.iot.controller;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -34,12 +35,17 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody ObjectNode user) {
+    public Map<String, String> login(@RequestBody ObjectNode user) {
         return userService.login(user.get("email").asText(), user.get("password").asText());
+    }
+    @PostMapping("/auth/refresh-token")
+    public String refreshToken(@RequestBody ObjectNode json) {
+        System.out.println("a");
+        return userService.refreshToken(json.get("token").asText());
     }
 
     @PostMapping("/login-vs")
-    public String loginVScode(@RequestBody ObjectNode user) {
+    public Map<String, String> loginVScode(@RequestBody ObjectNode user) {
         return userService.login(user.get("email").asText(), user.get("password").asText());
     }
 

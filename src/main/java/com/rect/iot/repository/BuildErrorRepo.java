@@ -10,4 +10,5 @@ import java.util.List;
 @Repository
 public interface BuildErrorRepo extends MongoRepository<BuildErrors, String>{
     List<BuildErrors> findByTemplateId(String templateId);
+    List<BuildErrors> deleteAllByTemplateId(String templateId);
 }

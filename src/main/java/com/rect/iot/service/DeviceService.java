@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.http.MediaType;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.rect.iot.controller.MqttEventListener;
 import com.rect.iot.model.Dashboard;
 import com.rect.iot.model.Datastream;
 import com.rect.iot.model.DeviceConstants;
@@ -22,6 +24,7 @@ import com.rect.iot.model.Image;
 import com.rect.iot.model.Template;
 import com.rect.iot.model.ThingData;
 import com.rect.iot.model.User;
+import com.rect.iot.model.VersionControl;
 import com.rect.iot.model.device.Device;
 import com.rect.iot.model.device.DeviceMetadata;
 import com.rect.iot.model.node.Flow;
@@ -37,6 +40,7 @@ import com.rect.iot.repository.ImageRepo;
 import com.rect.iot.repository.TemplateRepo;
 import com.rect.iot.repository.ThingDataRepo;
 import com.rect.iot.repository.UserRepo;
+import com.rect.iot.repository.VersionControlRepo;
 
 import lombok.AllArgsConstructor;
 
@@ -46,6 +50,7 @@ public class DeviceService {
 
     private DeviceRepo deviceRepo;
     private TemplateRepo templateRepo;
+    private TemplateService templateService;
     private DeviceMetadataRepo deviceMetadataRepo;
     private DashboardDataRepo dashboardDataRepo;
     private DashboardRepo dashboardRepo;
@@ -56,16 +61,22 @@ public class DeviceService {
     private ImageRepo imageRepo;
     private DeviceConstantsRepo deviceConstantsRepo;
     private BuildService buildService;
+    private VersionControlRepo versionControlRepo;
+    private MqttEventListener mqtt;
 
     public List<Device> getMyDevices() {
         String userId = userService.getMyUserId();
         return deviceRepo.findByOwner(userId);
     }
 
-    // TODO: verify template id
-    public Device createDevice(String name, String board, String templateId) {
+    public Device createDevice(String name, String board, String templateId) throws IllegalAccessException {
         String userId = userService.getMyUserId();
 
+        Template template = templateRepo.findById(templateId).get();
+        String access = templateService.getAccessLevel(template);
+        if (!(access.equals("Editor") || access.equals("Owner"))) {
+            throw new IllegalAccessException("User does not have access to this device");
+        }
         DeviceMetadata deviceMetadata = deviceMetadataRepo.save(DeviceMetadata.builder()
                 .datastreams(new ArrayList<>())
                 .build());
@@ -91,6 +102,8 @@ public class DeviceService {
                 .metadataId(deviceMetadata.getId())
                 .dashboardId(savedDashboard.getId())
                 .templateId(templateId)
+                .apiKey(generateApiKey())
+                .inheritTemplate(true)
                 .owner(userId)
                 .userAccess(new HashMap<>())
                 .build());
@@ -116,7 +129,6 @@ public class DeviceService {
         throw new IllegalAccessException("User does not have access to this device");
     }
 
-    // TODO: add method to update access and datastream
     public Device updateDeviceInfo(String id, Device newInfo, MultipartFile multipartImage)
             throws IllegalAccessException, IOException, InterruptedException {
         Device device = deviceRepo.findById(id).get();
@@ -133,10 +145,13 @@ public class DeviceService {
                 device.setImage(savedImage.getId());
             }
 
-            if(newInfo.getInheritTemplate() && device.getInheritTemplate().equals(false)) {
-                buildService.buildProject(device.getTemplateId(), device, device.getTargetVersion());
+            if (newInfo.getInheritTemplate() && device.getInheritTemplate().equals(false)) {
+                Template template = templateRepo.findById(device.getTemplateId()).get();
+                VersionControl versionControl = versionControlRepo.findByTemplateIdAndVersion(device.getTemplateId(), template.getProductionVersion());
+                    buildService.buildProject(device.getTemplateId(), device, template.getProductionVersion(), versionControl.getEnviroinment(), true);
+                
             }
-            
+
             device.setName(newInfo.getName());
             device.setDescription(newInfo.getDescription());
             device.setInheritTemplate(newInfo.getInheritTemplate());
@@ -273,7 +288,7 @@ public class DeviceService {
             User user = userRepo.findById(userId).get();
             user.getSharedDevices().remove(deviceId);
             userRepo.save(user);
-            
+
             return "ok";
         }
         throw new IllegalAccessException("User does not have access to this device");
@@ -325,6 +340,7 @@ public class DeviceService {
                 fout.close();
                 fileUploadStatus = "File Uploaded Successfully";
                 device.setTargetVersion(version);
+                mqtt.sendMessage("rect/device/" + deviceId + "/ota", version, false);
                 deviceRepo.save(device);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -335,12 +351,34 @@ public class DeviceService {
         throw new IllegalAccessException("User does not have access to this device");
     }
 
-    // TODO: verify version with template
+    public List<String> getAvailableVersions(String deviceId) throws IllegalAccessException {
+        Device device = deviceRepo.findById(deviceId).get();
+        String access = getAccessLevel(device);
+
+        if (access.equals("Editor") || access.equals("Owner")) {
+            return versionControlRepo.findByTemplateIdOrderByCreateDateDesc(device.getTemplateId()).stream()
+                    .map(versionControl -> versionControl.getVersion()).toList();
+        }
+        throw new IllegalAccessException("User does not have access to this device");
+    }
+
     public String saveDeviceConstants(String deviceId, String version, String data) throws IllegalAccessException {
         Device device = deviceRepo.findById(deviceId).get();
         String access = getAccessLevel(device);
 
         if (access.equals("Editor") || access.equals("Owner")) {
+            List<VersionControl> versionControls = versionControlRepo.findByTemplateId(device.getTemplateId());
+            boolean isVersionValid = false;
+            for (VersionControl versionControl : versionControls) {
+                if (versionControl.getVersion().equals(version)) {
+                    isVersionValid = true;
+                    break;
+                }
+            }
+            if (!isVersionValid) {
+                throw new IllegalAccessException("Invalid version");
+            }
+
             DeviceConstants constants = deviceConstantsRepo.findByDeviceIdAndVersion(deviceId, version);
             if (constants == null) {
                 constants = new DeviceConstants();
@@ -353,6 +391,53 @@ public class DeviceService {
             return "ok";
         }
         throw new IllegalAccessException("User does not have access to this device");
+    }
+
+    public String getDeviceConstants(String deviceId, String version) throws IllegalAccessException {
+        Device device = deviceRepo.findById(deviceId).get();
+        String access = getAccessLevel(device);
+
+        if (access.equals("Editor") || access.equals("Owner")) {
+            DeviceConstants constants = deviceConstantsRepo.findByDeviceIdAndVersion(deviceId, version);
+            if (constants == null) {
+                return "";
+            }
+            return constants.getData();
+        }
+        throw new IllegalAccessException("User does not have access to this device");
+    }
+
+    public Map<String, String> getDeviceConstantsVS(String deviceId) throws IllegalAccessException {
+        Device device = deviceRepo.findById(deviceId).get();
+        String access = getAccessLevel(device);
+
+        if (access.equals("Editor") || access.equals("Owner")) {
+            String devVersion = templateRepo.findById(device.getTemplateId()).get().getDevVersion();
+            DeviceConstants constants = deviceConstantsRepo.findByDeviceIdAndVersion(deviceId, devVersion);
+
+            Map<String, String> res = new HashMap<>();
+            res.put("API_KEY", device.getApiKey());
+            res.put("DEVICE_ID", deviceId);
+            if (constants != null) {
+                res.put("DATA", constants.getData());
+            }
+            return res;
+        }
+        throw new IllegalAccessException("User does not have access to this device");
+    }
+
+    String generateApiKey() {
+        char[] alphabets = { 'A', 'B', 'C', 'D', 'E', 'F', 'G',
+                'H', 'I', 'J', 'K', 'L', 'M', 'N',
+                'O', 'P', 'Q', 'R', 'S', 'T', 'U',
+                'V', 'W', 'X', 'Y', 'Z', '0', '1',
+                '2', '3', '4', '5', '6', '7', '8', '9' };
+
+        String key = "";
+        for (int i = 0; i < 15; i++)
+            key = key + alphabets[(int) (Math.random() * 100 % alphabets.length)];
+
+        return key;
     }
 
     private String getAccessLevel(Device device) {
