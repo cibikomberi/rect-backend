@@ -22,12 +22,12 @@ public class DashboardDataController {
     @Autowired
     private DashboardDataService dashboardDataService;
 
-    @GetMapping("dashboard-data/{deviceId}/{datastreamId}/{range}")
+    @GetMapping("dashboard-data/{dashboardId}/{deviceId}/{datastreamId}/{range}")
     @ResponseBody
-    public Object resolveDashboardData(@PathVariable String deviceId, @PathVariable String datastreamId, @PathVariable String range) {
+    public Object resolveDashboardData(@PathVariable String dashboardId, @PathVariable String deviceId, @PathVariable String datastreamId, @PathVariable String range) throws IllegalAccessException {
         Map<String, Object> a = new HashMap<>();
         a.put("type", range);
-        a.put("data", dashboardDataService.resolveDashboardData(deviceId, datastreamId, range));
+        a.put("data", dashboardDataService.resolveDashboardData(dashboardId, deviceId, datastreamId, range));
         return a;
     }
     

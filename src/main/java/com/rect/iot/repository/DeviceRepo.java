@@ -11,4 +11,5 @@ import com.rect.iot.model.device.Device;
 public interface DeviceRepo extends MongoRepository<Device, String> {
     List<Device> findByOwner(String owner);
     List<Device> findByTemplateIdAndInheritTemplate(String templateId, Boolean inheritTemplate);
+    List<Device> findByTemplateIdAndIsDevDevice(String templateId, Boolean isDevDevice);
 }

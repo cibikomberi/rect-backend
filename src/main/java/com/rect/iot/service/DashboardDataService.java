@@ -11,12 +11,13 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.rect.iot.controller.MqttEventListener;
+import com.rect.iot.model.Dashboard;
 import com.rect.iot.model.Datastream;
 import com.rect.iot.model.ThingData;
-import com.rect.iot.model.ThingLog;
 import com.rect.iot.model.device.Device;
 import com.rect.iot.model.device.DeviceMetadata;
 import com.rect.iot.model.dto.ChartDataDTO;
+import com.rect.iot.repository.DashboardRepo;
 import com.rect.iot.repository.DeviceMetadataRepo;
 import com.rect.iot.repository.DeviceRepo;
 import com.rect.iot.repository.ThingDataRepo;
@@ -39,12 +40,20 @@ public class DashboardDataService {
     private MqttEventListener mqtt;
     @Autowired
     private ThingLogRepo thingLogRepo;
+    @Autowired
+    private DashboardRepo dashboardRepo;
+    @Autowired
+    private DashboardService dashboardService;
 
     // @Autowired
     // private DeviceMetadataRepo deviceMetadataRepo;
-//TODO : conditional range
-    public Object resolveDashboardData(String deviceId, String datastreamId, String range ) {
-        if (!range.equals("last")) {
+    public Object resolveDashboardData(String dashboardId, String deviceId, String datastreamId, String range ) throws IllegalAccessException {
+        Dashboard dashboard = dashboardRepo.findById(dashboardId).get();
+        String access = dashboardService.getAccessLevel(dashboard);
+        if (!(dashboard.getAccess().equals("Public") || access.equals("Viewer") || access.equals("Editor") || access.equals("Owner"))) {
+            throw new IllegalAccessException("User does not have access to this dashboard");
+        }
+            if (!range.equals("last")) {
             int days = Integer.parseInt(range);
             ArrayList<ChartDataDTO> chartData = new ArrayList<>();
             if (datastreamId.equals("rect-log")) {
@@ -69,7 +78,7 @@ public class DashboardDataService {
         List<Datastream> datastreams = metadata.getDatastreams();
 
         if (datastreamId.equals("rect-log")) {
-            ThingLog thingLog = thingService.saveThingLog("[USER] " + dataIn, "User", deviceId);
+            thingService.saveThingLog("[USER] " + dataIn, "User", deviceId);
             mqtt.sendMessage("rect/device/" + deviceId + "/command", dataIn, false);
         }
         

@@ -12,7 +12,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
+import com.rect.iot.model.Dashboard;
 import com.rect.iot.model.User;
+import com.rect.iot.repository.DashboardRepo;
 import com.rect.iot.repository.UserRepo;
 import com.rect.iot.service.DashboardService;
 import com.rect.iot.service.JWTService;
@@ -26,6 +28,8 @@ public class AuthHandshakeInterceptor implements HandshakeInterceptor {
     private UserRepo userRepo;
     @Autowired
     private DashboardService dashboardService;
+    @Autowired
+    private DashboardRepo dashboardRepo;
     
     @Override
     public boolean beforeHandshake(
@@ -34,10 +38,14 @@ public class AuthHandshakeInterceptor implements HandshakeInterceptor {
             @NonNull WebSocketHandler wsHandler,
             @NonNull Map<String, Object> attributes) throws Exception {
         ServletServerHttpRequest servletRequest = (ServletServerHttpRequest) request;
+        String dashboardId = servletRequest.getServletRequest().getParameter("dashboard");
+        Dashboard dashboard = dashboardRepo.findById(dashboardId).get();
+        if (dashboard.getAccess().equals("Public")) {
+            return true;
+        }
         String token = extractToken(servletRequest);
         String username = jwtService.extractUserName(token);
         User user = userRepo.findByEmail(username);
-        String dashboardId = servletRequest.getServletRequest().getParameter("dashboard");
         if (dashboardService.hasViewAccess(dashboardId, user.getId())) {
             return true;
         }

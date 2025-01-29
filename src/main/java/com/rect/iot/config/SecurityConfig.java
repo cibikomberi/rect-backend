@@ -33,7 +33,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // .httpBasic(Customizer.withDefaults())
             .authorizeHttpRequests(request -> request
-                .requestMatchers("/login", "/auth/refresh-token","/login-vs", "/register", "/websocket/**","/profile/image/**", "/thing/update/*", "/test").permitAll()
+                .requestMatchers("/login", "/auth/refresh-token","/login-vs", "/register", "/websocket/**","/profile/image/**", "/thing/update/*", "/dashboard/data/*", "dashboard-data/*/*/*/*").permitAll()
                 .anyRequest().authenticated())
             .cors(Customizer.withDefaults())
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

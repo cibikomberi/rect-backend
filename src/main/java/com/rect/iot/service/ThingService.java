@@ -46,8 +46,6 @@ public class ThingService {
 
     public List<String> saveThingData(String deviceId, Map<String, ?> dataMap) {
         Device device = deviceRepo.findById(deviceId).get();
-        device.setLastActiveTime(LocalDateTime.now());
-        deviceRepo.save(device);
 
         DeviceMetadata deviceMetadata = deviceMetadataRepo.findById(device.getMetadataId()).get();
         List<Datastream> datastreams = deviceMetadata.getDatastreams();
@@ -92,6 +90,13 @@ public class ThingService {
             }
         }
         return invalidKeys;
+    }
+
+    public void updateThingStatus(String deviceId, Map<String, ?> dataMap) {
+        Device device = deviceRepo.findById(deviceId).get();
+        device.setLastActiveTime(LocalDateTime.now());
+        device.setStatus(dataMap.get("status").toString());
+        deviceRepo.save(device);
     }
 
     public ThingLog saveThingLog(String log, String type, String deviceId) {

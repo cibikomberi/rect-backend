@@ -28,6 +28,7 @@ public class MqttEventListener {
 
     private final Pattern dataTopicPattern = Pattern.compile("rect/(.*?)/data");
     private final Pattern logTopicPattern = Pattern.compile("rect/(.*?)/log");
+    private final Pattern statusTopicPattern = Pattern.compile("rect/(.*?)/status");
 
     @EventListener
     public void handleTopic1(MqttMessageEvent event) throws JsonMappingException, JsonProcessingException {
@@ -35,6 +36,27 @@ public class MqttEventListener {
             saveThingData(event.getTopic(), event.getPayload());
         } else if (event.getTopic().matches("rect/[[0-9] | [a-z] | [A-Z]]+/log")) {
             saveThingLog(event.getTopic(), event.getPayload());
+        } else if (event.getTopic().matches("rect/[[0-9] | [a-z] | [A-Z]]+/status")) {
+            updateThingStatus(event.getTopic(), event.getPayload());
+        }
+    }
+
+    private void updateThingStatus(String topic, String payload) {
+        ObjectMapper mapper = new ObjectMapper();
+        TypeReference<HashMap<String, String>> typeRef = new TypeReference<HashMap<String, String>>() {};
+        Matcher matcher = statusTopicPattern.matcher(topic);
+        if (matcher.find()) {
+            try {
+                Map<String, String> map = mapper.readValue(payload, typeRef);
+                thingService.updateThingStatus(matcher.group(1), map);
+                if(map.get("status").equalsIgnoreCase("Online")) {
+                    saveThingLog("[Device] " + map.get("status"), "LOG", matcher.group(1));
+                } else {
+                    saveThingLog("[Device] " + map.get("status"), "ERROR", matcher.group(1));
+                }
+            } catch (JsonProcessingException e) {
+                saveThingLog("[Rect] Invalid JSON", "ERROR", matcher.group(1));
+            } 
         }
     }
 
@@ -42,11 +64,9 @@ public class MqttEventListener {
         ObjectMapper mapper = new ObjectMapper();
         TypeReference<HashMap<String, String>> typeRef = new TypeReference<HashMap<String, String>>() {};
         Matcher matcher = dataTopicPattern.matcher(topic);
-        System.out.println(payload);
         if (matcher.find()) {
             try {
                 Map<String, String> map = mapper.readValue(payload, typeRef);
-                System.out.println(matcher.group(1));
                 List<String> invalidKeys = thingService.saveThingData(matcher.group(1), map);
                 if (invalidKeys != null) {
                     saveThingLog("[Rect] Invalid Datastreams: " + invalidKeys.toString(), "ERROR", matcher.group(1));

@@ -26,8 +26,11 @@ public class Device {
 
     private String board;
     private String description;
+    @Builder.Default
+    private String status = "Offline";
 
     private Boolean inheritTemplate;
+    private Boolean isDevDevice;
     // private Boolean inheritDashboardFromTemplate;
     @Builder.Default
     private String currentVersion = "";

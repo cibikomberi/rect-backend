@@ -38,10 +38,13 @@ public class SubscriptionValidationInterceptor implements ChannelInterceptor {
             if (dashboardId == null) {
                 return null;
             }
+            Dashboard dashboard = dashboardRepo.findById(dashboardId).get();
+            if (dashboard.getAccess().equals("Public")) {
+                return message;
+            }
             if (token != null && token.startsWith("Bearer ")) {
                 token = token.substring(7);
                 String userId = jwtService.extractId(token);
-                Dashboard dashboard = dashboardRepo.findById(dashboardId).get();
                 if (dashboardService.hasViewAccess(dashboard, userId)) {
                     if (dashboard.getAssociatedDevices().contains(deviceId)) {
                         return message;
