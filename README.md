@@ -47,8 +47,13 @@ Rect is the backend service for an IoT device management platform that enables u
 
 ## Frontend Repository
 The frontend for this project is built using **React.js** with **IBM’s Carbon Design System** for a modern and responsive UI.
+
 🔗 **Frontend Repository:** [https://github.com/cibikomberi/rect-frontend](https://github.com/cibikomberi/rect-frontend)
 
+## PlatformIO Library
+A dedicated **PlatformIO Library** is available for ESP32/ESP8266 devices to communicate with the Rect backend.
+
+🔗 **PlatformIO Library:** [https://github.com/cibikomberi/Rect](https://github.com/cibikomberi/Rect)
 ## Contact
 For any queries or support, please contact [cibikomberi@gmail.com](mailto:cibikomberi@gmail.com).
 
