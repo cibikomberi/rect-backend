@@ -1,4 +1,4 @@
-package com.rect.iot.model;
+package com.rect.iot.model.user;
 
 import java.util.Set;
 

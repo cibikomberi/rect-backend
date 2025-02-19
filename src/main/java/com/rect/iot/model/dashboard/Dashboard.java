@@ -1,4 +1,4 @@
-package com.rect.iot.model;
+package com.rect.iot.model.dashboard;
 
 import java.util.Map;
 import java.util.Set;
@@ -8,7 +8,6 @@ import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.rect.iot.model.widget.DashboardData;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,7 +26,15 @@ public class Dashboard {
     private String access;
     private Boolean isDeviceSpecific; 
     private Set<String> associatedDevices;
+
     private String dashboardDataId;
+    @JsonIgnore
+    private String mobileDashboardDataId;
+    @JsonIgnore
+    private String tabletDashboardDataId;
+    @JsonIgnore
+    private String largeDashboardDataId;
+    
     @Transient
     private DashboardData dashboardData;
     @Transient

@@ -1,4 +1,4 @@
-package com.rect.iot.model;
+package com.rect.iot.model.device;
 
 
 import org.springframework.data.annotation.Id;

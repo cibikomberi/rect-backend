@@ -24,7 +24,7 @@ public class ThingController {
     
     @PostMapping("/thing/log/{deviceId}")
     public ResponseEntity<?> saveThingData(@PathVariable String deviceId, @RequestBody Map<String, ?> dataMap) {
-        List<String> invalidKeys = thingService.saveThingData(deviceId, dataMap);
+        List<String> invalidKeys = thingService.saveThingData(deviceId, dataMap, false);
         if (invalidKeys == null) {
             return new ResponseEntity<>(HttpStatus.OK);            
         }

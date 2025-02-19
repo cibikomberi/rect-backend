@@ -1,15 +1,6 @@
 package com.rect.iot.controller;
 
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.rect.iot.model.node.Edge;
-import com.rect.iot.model.node.Flow;
-import com.rect.iot.repository.FlowRepo;
-import com.rect.iot.service.compile.ArduinoHeaderParser;
-
 import java.io.File;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -19,9 +10,13 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.rect.iot.repository.FlowRepo;
+import com.rect.iot.service.compile.ArduinoHeaderParser;
 
 @RestController
 public class TestController {
@@ -30,20 +25,20 @@ public class TestController {
     FlowRepo flowRepo;
 
 
-    @GetMapping("/test")
-    public String getMethodName() {
-        Edge e1 = new Edge();
-        Edge e2 = new Edge();
-        e1.setId("2L");
-        e2.setId("4L");
-        List<Edge> e = new ArrayList<>();
-        e.add(e2);
-        e.add(e1);
-        Flow flow = Flow.builder().edges(e).build();
-        System.out.println("test");
-        flowRepo.save(flow);
-        return new String("ok");
-    }
+    // @GetMapping("/test")
+    // public String getMethodName() {
+    //     Edge e1 = new Edge();
+    //     Edge e2 = new Edge();
+    //     e1.setId("2L");
+    //     e2.setId("4L");
+    //     List<Edge> e = new ArrayList<>();
+    //     e.add(e2);
+    //     e.add(e1);
+    //     Flow flow = Flow.builder().edges(e).build();
+    //     System.out.println("test");
+    //     flowRepo.save(flow);
+    //     return new String("ok");
+    // }
 
 @PostMapping("/parse")
     public Map<String, List<Map<String, Object>>> parseArduinoFile(@RequestParam("file") MultipartFile file) throws Exception {

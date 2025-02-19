@@ -1,5 +1,6 @@
 package com.rect.iot.controller;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,8 +9,6 @@ import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
-import org.springframework.messaging.MessageChannel;
-import org.springframework.messaging.support.GenericMessage;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -23,12 +22,11 @@ import com.rect.iot.service.ThingService;
 public class MqttEventListener {
     @Autowired
     private ThingService thingService;
-    @Autowired
-    private MessageChannel mqttOutboundChannel;
 
     private final Pattern dataTopicPattern = Pattern.compile("rect/(.*?)/data");
     private final Pattern logTopicPattern = Pattern.compile("rect/(.*?)/log");
     private final Pattern statusTopicPattern = Pattern.compile("rect/(.*?)/status");
+    private final Pattern syncTopicPattern = Pattern.compile("rect/(.*?)/sync");
 
     @EventListener
     public void handleTopic1(MqttMessageEvent event) throws JsonMappingException, JsonProcessingException {
@@ -38,9 +36,20 @@ public class MqttEventListener {
             saveThingLog(event.getTopic(), event.getPayload());
         } else if (event.getTopic().matches("rect/[[0-9] | [a-z] | [A-Z]]+/status")) {
             updateThingStatus(event.getTopic(), event.getPayload());
+        } else if (event.getTopic().matches("rect/[[0-9] | [a-z] | [A-Z]]+/sync")) {
+            syncDeviceWithServer(event.getTopic(), event.getPayload());
         }
     }
 
+
+    private void syncDeviceWithServer(String topic, String payload) {
+        Matcher matcher = syncTopicPattern.matcher(topic);
+        if (matcher.find()) {
+            List<String> datastreams = Arrays.asList(payload.split(","));
+            thingService.syncDeviceWithServer(matcher.group(1), datastreams);
+        }  
+    }
+    
     private void updateThingStatus(String topic, String payload) {
         ObjectMapper mapper = new ObjectMapper();
         TypeReference<HashMap<String, String>> typeRef = new TypeReference<HashMap<String, String>>() {};
@@ -67,7 +76,7 @@ public class MqttEventListener {
         if (matcher.find()) {
             try {
                 Map<String, String> map = mapper.readValue(payload, typeRef);
-                List<String> invalidKeys = thingService.saveThingData(matcher.group(1), map);
+                List<String> invalidKeys = thingService.saveThingData(matcher.group(1), map, true);
                 if (invalidKeys != null) {
                     saveThingLog("[Rect] Invalid Datastreams: " + invalidKeys.toString(), "ERROR", matcher.group(1));
                 }
@@ -86,29 +95,5 @@ public class MqttEventListener {
 
     private void saveThingLog(String log, String type, String deviceId) {
         thingService.saveThingLog(log, type, deviceId);
-    }
-
-    public void sendMessage(String topic, Object payload, boolean retain) {
-        String payloadString = convertPayloadToString(payload);
-        Map<String, Object> headers = new HashMap<>();
-        headers.put("mqtt_topic", topic);
-        headers.put("mqtt_retained", retain);
-        mqttOutboundChannel.send(new GenericMessage<>(payloadString, headers));
-    }
-
-    private String convertPayloadToString(Object payload) {
-        if (payload instanceof String) {
-            return (String) payload;
-        } else if (payload instanceof byte[]) {
-            return new String((byte[]) payload);
-        } else {
-            // Use a JSON library to serialize the object (e.g., Jackson)
-            try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                return objectMapper.writeValueAsString(payload);
-            } catch (JsonProcessingException e) {
-                throw new IllegalArgumentException("Failed to serialize payload to JSON", e);
-            }
-        }
     }
 }

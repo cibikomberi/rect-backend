@@ -1,4 +1,4 @@
-package com.rect.iot.model.widget;
+package com.rect.iot.model.dashboard;
 
 import java.util.List;
 

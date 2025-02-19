@@ -1,5 +1,6 @@
-package com.rect.iot.model.widget;
+package com.rect.iot.model.dashboard;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -10,7 +11,9 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class LogWidget extends Widget{
-
+public class CircularGaugeWidget extends Widget {
+    Integer min;
+    Integer max;
 }

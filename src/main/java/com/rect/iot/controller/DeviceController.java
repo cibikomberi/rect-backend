@@ -22,10 +22,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.rect.iot.model.Datastream;
-import com.rect.iot.model.User;
+import com.rect.iot.model.automation.Automation;
 import com.rect.iot.model.device.Device;
 import com.rect.iot.model.device.DeviceMetadata;
 import com.rect.iot.model.node.Flow;
+import com.rect.iot.model.user.User;
 import com.rect.iot.service.DeviceService;
 
 
@@ -90,6 +91,19 @@ public class DeviceController {
     @GetMapping("/devices/shared")
     public List<Device> getSharedTemplates() {
         return deviceService.getSharedDevices();
+    }
+
+    @PostMapping("/device/automation/{deviceId}")
+    public String addAutomation(@PathVariable String deviceId, @RequestBody Automation automation) throws IllegalAccessException{
+        return deviceService.addAutomation(deviceId, automation);
+    }
+    @PutMapping("/device/automation/{deviceId}")
+    public String updateAutomation(@PathVariable String deviceId, @RequestBody Automation automation) throws IllegalAccessException{
+        return deviceService.updateAutomation(deviceId, automation);
+    }
+    @DeleteMapping("/device/automation/{deviceId}")
+    public String deleteAutomation(@PathVariable String deviceId, @RequestBody String automationName) throws IllegalAccessException{
+        return deviceService.deleteAutomation(deviceId, automationName);
     }
 
     @GetMapping("/device/image/{id}")

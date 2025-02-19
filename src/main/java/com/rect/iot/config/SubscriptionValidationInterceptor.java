@@ -9,7 +9,7 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.stereotype.Component;
 
-import com.rect.iot.model.Dashboard;
+import com.rect.iot.model.dashboard.Dashboard;
 import com.rect.iot.repository.DashboardRepo;
 import com.rect.iot.service.DashboardService;
 import com.rect.iot.service.JWTService;

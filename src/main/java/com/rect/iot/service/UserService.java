@@ -1,8 +1,10 @@
 package com.rect.iot.service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +19,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.rect.iot.model.AuthToken;
 import com.rect.iot.model.Image;
-import com.rect.iot.model.User;
-import com.rect.iot.model.UserPrincipal;
+import com.rect.iot.model.user.AuthToken;
+import com.rect.iot.model.user.User;
+import com.rect.iot.model.user.UserPrincipal;
 import com.rect.iot.repository.AuthTokenRepo;
 import com.rect.iot.repository.ImageRepo;
 import com.rect.iot.repository.UserRepo;
@@ -56,7 +58,7 @@ public class UserService {
         throw new DuplicateKeyException("User already exists");
     }
 
-    public Map<String, String> login(String email, String password) {
+    public Map<String, String> login(String email, String password, String client, String os) {
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(email, password));
 
@@ -68,6 +70,9 @@ public class UserService {
                     ((UserPrincipal) authentication.getPrincipal()).getRole());
 
             authTokenRepo.save(AuthToken.builder()
+                    .os(os)
+                    .client(client)
+                    .lastActiveTime(LocalDateTime.now())
                     .token(authToken)
                     .userId(userId)
                     .build());
@@ -85,6 +90,8 @@ public class UserService {
         System.out.println(token);
         AuthToken authToken = authTokenRepo.findByToken(token);
         if (authToken != null) {
+            authToken.setLastActiveTime(LocalDateTime.now());
+            authTokenRepo.save(authToken);
             return jwtService.generateToken(
                     jwtService.extractUserName(token),
                     jwtService.extractId(token),
@@ -94,6 +101,12 @@ public class UserService {
         return null;
     }
 
+    public List<AuthToken> getMySessions() {
+        String userId = getMyUserId();
+        List<AuthToken> authTokens = authTokenRepo.findByUserId(userId);
+        return authTokens;
+    }
+    
     public User whoAmI() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userId = (String) authentication.getPrincipal();

@@ -5,9 +5,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,12 +22,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import com.rect.iot.controller.EmailSender;
 import com.rect.iot.model.Datastream;
-import com.rect.iot.model.ThingData;
-import com.rect.iot.model.ThingLog;
+import com.rect.iot.model.automation.Automation;
+import com.rect.iot.model.automation.EmailStatusAutomation;
+import com.rect.iot.model.automation.EmailValueAutomation;
+import com.rect.iot.model.automation.StateAutomation;
 import com.rect.iot.model.device.Device;
 import com.rect.iot.model.device.DeviceMetadata;
 import com.rect.iot.model.dto.ChartDataDTO;
+import com.rect.iot.model.thing.ThingData;
+import com.rect.iot.model.thing.ThingLog;
 import com.rect.iot.repository.DeviceMetadataRepo;
 import com.rect.iot.repository.DeviceRepo;
 import com.rect.iot.repository.ThingDataRepo;
@@ -43,8 +50,15 @@ public class ThingService {
     private DeviceMetadataRepo deviceMetadataRepo;
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+    @Autowired
+    private MqttMessageSender mqttMessageSender;
+    @Autowired
+    private EmailSender emailSender;
 
-    public List<String> saveThingData(String deviceId, Map<String, ?> dataMap) {
+    // public List<String> saveThingData(String deviceId, Map<String, ?> dataMap) {
+    // return saveThingData(deviceId, dataMap, true);
+    // }
+    public List<String> saveThingData(String deviceId, Map<String, ?> dataMap, boolean isDataFromDevice) {
         Device device = deviceRepo.findById(deviceId).get();
 
         DeviceMetadata deviceMetadata = deviceMetadataRepo.findById(device.getMetadataId()).get();
@@ -71,6 +85,7 @@ public class ThingService {
                     invalidKeys.add(set.getKey());
                     continue;
                 }
+
                 ThingData<?> savedData = thingDataRepo.save(ThingData.builder()
                         .datastreamId(set.getKey())
                         .deviceId(deviceId)
@@ -78,10 +93,31 @@ public class ThingService {
                         .dateTime(LocalDateTime.now())
                         .build());
 
-                Map<String, Object> a = new HashMap<>();
-                a.put("type", "update");
-                a.put("data", ChartDataDTO.builder().value(data).dateTime(savedData.getDateTime()).build());
-                messagingTemplate.convertAndSend("/topic/data/" + deviceId + "/" + set.getKey(), a);
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("type", "update");
+                payload.put("data", ChartDataDTO.builder().value(data).dateTime(savedData.getDateTime()).build());
+                messagingTemplate.convertAndSend("/topic/data/" + deviceId + "/" + set.getKey(), payload);
+                if (isDataFromDevice) {
+                    for (Automation automation : deviceMetadata.getAutomations()) {
+                        if (automation instanceof StateAutomation) {
+                            StateAutomation stateAutomation = (StateAutomation) automation;
+                            if (stateAutomation.getDatastream().getIdentifier().equals(set.getKey())) {
+                                HashMap<String, Object> val = new HashMap<>();
+                                val.put("id", stateAutomation.getTargetDatastream().getIdentifier());
+                                val.put("data", data);
+                                mqttMessageSender.sendMessage(
+                                        "rect/device/" + stateAutomation.getTargetDevice().getId() + "/data",
+                                        val, false);
+                            }
+                        } else if (automation instanceof EmailValueAutomation) {
+                            EmailValueAutomation emailValueAutomation = (EmailValueAutomation) automation;
+                            if (emailValueAutomation.getDatastream().getIdentifier().equals(set.getKey())) {
+                                emailSender.send(device.getName(), set.getKey(), set.getValue().toString(),
+                                        emailValueAutomation.getEmailList());
+                            }
+                        }
+                    }
+                }
             } else {
                 if (invalidKeys == null) {
                     invalidKeys = new ArrayList<>();
@@ -92,8 +128,30 @@ public class ThingService {
         return invalidKeys;
     }
 
+    public void syncDeviceWithServer(String deviceId, List<String> datastreams) {
+        // Device device = deviceRepo.findById(deviceId).get();
+        List<ThingData<?>> data = thingDataRepo.findLatestValuesForDatastreams(deviceId, datastreams);
+        for(ThingData<?> val: data) {
+            System.out.println(val);
+            HashMap<String, Object> payload = new HashMap<>();
+            payload.put("id", val.getDatastreamId());
+            payload.put("data", val.getValue());
+            mqttMessageSender.sendMessage("rect/device/" + deviceId + "/data", payload, false);
+        }
+    }
+
     public void updateThingStatus(String deviceId, Map<String, ?> dataMap) {
         Device device = deviceRepo.findById(deviceId).get();
+        DeviceMetadata deviceMetadata = deviceMetadataRepo.findById(device.getMetadataId()).get();
+        
+        for (Automation automation : deviceMetadata.getAutomations()) {
+            if (automation instanceof EmailValueAutomation) {
+                EmailStatusAutomation emailStatusAutomation = (EmailStatusAutomation) automation;
+                emailSender.send(device.getName(), "Status: ", dataMap.get("status").toString(),
+                        emailStatusAutomation.getEmailList());
+            }
+        }
+
         device.setLastActiveTime(LocalDateTime.now());
         device.setStatus(dataMap.get("status").toString());
         deviceRepo.save(device);
@@ -108,9 +166,9 @@ public class ThingService {
                 .build());
 
         Map<String, Object> a = new HashMap<>();
-                a.put("type", "update");
-                a.put("data", saved);
-                messagingTemplate.convertAndSend("/topic/data/" + deviceId + "/rect-log", a);
+        a.put("type", "update");
+        a.put("data", saved);
+        messagingTemplate.convertAndSend("/topic/data/" + deviceId + "/rect-log", a);
 
         return saved;
     }

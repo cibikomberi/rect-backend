@@ -2,7 +2,7 @@ package com.rect.iot.repository;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import com.rect.iot.model.ThingLog;
+import com.rect.iot.model.thing.ThingLog;
 
 import java.time.LocalDateTime;
 import java.util.List;

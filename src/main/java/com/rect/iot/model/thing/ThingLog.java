@@ -1,4 +1,4 @@
-package com.rect.iot.model;
+package com.rect.iot.model.thing;
 
 import java.time.LocalDateTime;
 

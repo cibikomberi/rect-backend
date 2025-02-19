@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import com.rect.iot.model.Dashboard;
-import com.rect.iot.model.User;
+import com.rect.iot.model.dashboard.Dashboard;
+import com.rect.iot.model.user.User;
 import com.rect.iot.repository.DashboardRepo;
 import com.rect.iot.repository.UserRepo;
 import com.rect.iot.service.DashboardService;

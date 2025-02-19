@@ -16,20 +16,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.rect.iot.controller.MqttEventListener;
-import com.rect.iot.model.Dashboard;
 import com.rect.iot.model.Datastream;
-import com.rect.iot.model.DeviceConstants;
 import com.rect.iot.model.Image;
 import com.rect.iot.model.Template;
-import com.rect.iot.model.ThingData;
-import com.rect.iot.model.User;
 import com.rect.iot.model.VersionControl;
+import com.rect.iot.model.automation.Automation;
+import com.rect.iot.model.automation.ScheduleAutomation;
+import com.rect.iot.model.dashboard.Dashboard;
+import com.rect.iot.model.dashboard.DashboardData;
+import com.rect.iot.model.dashboard.Widget;
 import com.rect.iot.model.device.Device;
+import com.rect.iot.model.device.DeviceConstants;
 import com.rect.iot.model.device.DeviceMetadata;
 import com.rect.iot.model.node.Flow;
-import com.rect.iot.model.widget.DashboardData;
-import com.rect.iot.model.widget.Widget;
+import com.rect.iot.model.thing.ThingData;
+import com.rect.iot.model.user.User;
 import com.rect.iot.repository.DashboardDataRepo;
 import com.rect.iot.repository.DashboardRepo;
 import com.rect.iot.repository.DeviceConstantsRepo;
@@ -62,7 +63,8 @@ public class DeviceService {
     private DeviceConstantsRepo deviceConstantsRepo;
     private BuildService buildService;
     private VersionControlRepo versionControlRepo;
-    private MqttEventListener mqtt;
+    private MqttMessageSender mqttMessageSender;    
+    private DynamicTaskScheduler taskScheduler;
 
     public List<Device> getMyDevices() {
         String userId = userService.getMyUserId();
@@ -78,19 +80,43 @@ public class DeviceService {
             throw new IllegalAccessException("User does not have access to this device");
         }
         DeviceMetadata deviceMetadata = deviceMetadataRepo.save(DeviceMetadata.builder()
+                .automations(new ArrayList<>())
                 .datastreams(new ArrayList<>())
                 .build());
 
-        DashboardData data = DashboardData.builder()
+                DashboardData data = DashboardData.builder()
+                .days("1")
                 .layout(new ArrayList<>())
                 .widgetData(new HashMap<String, Widget>())
                 .build();
-        DashboardData savedDashboardData = dashboardDataRepo.save(data);
+        DashboardData mobileData = DashboardData.builder()
+                .days("1")
+                .layout(new ArrayList<>())
+                .widgetData(new HashMap<String, Widget>())
+                .build();
+        DashboardData tabletData = DashboardData.builder()
+                .days("1")
+                .layout(new ArrayList<>())
+                .widgetData(new HashMap<String, Widget>())
+                .build();
+        DashboardData largeData = DashboardData.builder()
+                .days("1")
+                .layout(new ArrayList<>())
+                .widgetData(new HashMap<String, Widget>())
+                .build();
+
+        DashboardData dashboardData = dashboardDataRepo.save(data);
+        DashboardData mobileDashboardData = dashboardDataRepo.save(mobileData);
+        DashboardData tabletDashboardData = dashboardDataRepo.save(tabletData);
+        DashboardData largeDashboardData = dashboardDataRepo.save(largeData);
 
         Dashboard savedDashboard = dashboardRepo.save(Dashboard.builder()
                 .name(name)
                 .access("Private")
-                .dashboardDataId(savedDashboardData.getId())
+                .dashboardDataId(dashboardData.getId())
+                .mobileDashboardDataId(mobileDashboardData.getId())
+                .tabletDashboardDataId(tabletDashboardData.getId())
+                .largeDashboardDataId(largeDashboardData.getId())
                 .owner(userId)
                 .userAccess(new HashMap<String, String>())
                 .build());
@@ -124,6 +150,7 @@ public class DeviceService {
         if (access.equals("Viewer") || access.equals("Editor") || access.equals("Owner")) {
             Template template = templateRepo.findById(device.getTemplateId()).get();
             device.setTemplateName(template.getName());
+            device.setMyAccess(access);
             return device;
         }
         throw new IllegalAccessException("User does not have access to this device");
@@ -147,9 +174,11 @@ public class DeviceService {
 
             if (newInfo.getInheritTemplate() && device.getInheritTemplate().equals(false)) {
                 Template template = templateRepo.findById(device.getTemplateId()).get();
-                VersionControl versionControl = versionControlRepo.findByTemplateIdAndVersion(device.getTemplateId(), template.getProductionVersion());
-                    buildService.buildProject(device.getTemplateId(), device, template.getProductionVersion(), versionControl.getEnviroinment(), true);
-                
+                VersionControl versionControl = versionControlRepo.findByTemplateIdAndVersion(device.getTemplateId(),
+                        template.getProductionVersion());
+                buildService.buildProject(device.getTemplateId(), device, template.getProductionVersion(),
+                        versionControl.getEnviroinment(), true);
+
             }
 
             device.setName(newInfo.getName());
@@ -301,6 +330,90 @@ public class DeviceService {
         return devices;
     }
 
+    public String addAutomation(String deviceId, Automation automation) throws IllegalAccessException {
+        Device device = deviceRepo.findById(deviceId).get();
+        String access = getAccessLevel(device);
+
+        if (access.equals("Editor") || access.equals("Owner")) {
+            DeviceMetadata metadata = deviceMetadataRepo.findById(device.getMetadataId()).get();
+            List<Automation> existingAutomations = metadata.getAutomations();
+            for (Automation existingAutomation : existingAutomations) {
+                if (existingAutomation.getName().equals(automation.getName())) {
+                    throw new IllegalAccessException("Invalid name");
+                }
+            }
+            if (automation instanceof ScheduleAutomation) {
+                ScheduleAutomation scheduleAutomation = (ScheduleAutomation) automation;
+                scheduleAutomation.setTaskId(taskScheduler.scheduleEvent(deviceId + automation.getName(), () -> scheduledAutomationHandler(deviceId, scheduleAutomation.getDatastream().getIdentifier(), convertStringToFloat(scheduleAutomation.getValue())), scheduleAutomation.getTime()));
+            }
+            existingAutomations.add(automation);
+            deviceMetadataRepo.save(metadata);
+            return "ok"; 
+        }
+        throw new IllegalAccessException("User does not have access to this device");
+    }
+    public String updateAutomation(String deviceId, Automation automation) throws IllegalAccessException {
+        Device device = deviceRepo.findById(deviceId).get();
+        String access = getAccessLevel(device);
+
+        if (access.equals("Editor") || access.equals("Owner")) {
+            DeviceMetadata metadata = deviceMetadataRepo.findById(device.getMetadataId()).get();
+            List<Automation> existingAutomations = metadata.getAutomations();
+
+            for (int i = 0; i < existingAutomations.size(); i++) {
+                if (existingAutomations.get(i).getName().equals(automation.getName())) {
+                    if (existingAutomations.get(i) instanceof ScheduleAutomation) {
+                        ScheduleAutomation existingScheduleAutomation = (ScheduleAutomation) existingAutomations.get(i);
+                        System.out.println(existingScheduleAutomation);
+                        taskScheduler.cancelEvent(existingScheduleAutomation.getTaskId());
+                    }
+                    existingAutomations.remove(i);
+                }
+            }
+            if (automation instanceof ScheduleAutomation) {
+                ScheduleAutomation scheduleAutomation = (ScheduleAutomation) automation;
+                scheduleAutomation.setTaskId(taskScheduler.scheduleEvent(deviceId + automation.getName(), () -> scheduledAutomationHandler(deviceId, scheduleAutomation.getDatastream().getIdentifier(), convertStringToFloat(scheduleAutomation.getValue())), scheduleAutomation.getTime()));
+                System.out.println(scheduleAutomation.getTaskId());
+            }
+            existingAutomations.add(automation);
+            deviceMetadataRepo.save(metadata);
+            return "ok"; 
+        }
+        throw new IllegalAccessException("User does not have access to this device");
+    }
+
+    public String deleteAutomation(String deviceId, String automationName) throws IllegalAccessException {
+        Device device = deviceRepo.findById(deviceId).get();
+        String access = getAccessLevel(device);
+
+        if (access.equals("Editor") || access.equals("Owner")) {
+            DeviceMetadata metadata = deviceMetadataRepo.findById(device.getMetadataId()).get();
+            List<Automation> existingAutomations = metadata.getAutomations();
+
+            for (int i = 0; i < existingAutomations.size(); i++) {
+                if (existingAutomations.get(i).getName().equals(automationName)) {
+                    if (existingAutomations.get(i) instanceof ScheduleAutomation) {
+                        ScheduleAutomation existingScheduleAutomation = (ScheduleAutomation) existingAutomations.get(i);
+                        taskScheduler.cancelEvent(existingScheduleAutomation.getTaskId());
+                    }
+                    existingAutomations.remove(i);
+                }
+            }
+            deviceMetadataRepo.save(metadata);
+            return "ok";
+        }
+        throw new IllegalAccessException("User does not have access to this device");
+
+    }
+
+    private void scheduledAutomationHandler(String deviceId, String datastreamId, Object value) {
+        System.out.println("Sche");
+        HashMap<String, Object> payload = new HashMap<>();
+        payload.put("id", datastreamId);
+        payload.put("data", value);
+        mqttMessageSender.sendMessage("rect/device/" + deviceId + "/data", payload, false);
+    }
+
     public List<User> getFriends(String nickname) {
         return userRepo.searchUsers(nickname);
         // return null;
@@ -340,7 +453,7 @@ public class DeviceService {
                 fout.close();
                 fileUploadStatus = "File Uploaded Successfully";
                 device.setTargetVersion(version);
-                mqtt.sendMessage("rect/device/" + deviceId + "/ota", version, false);
+                mqttMessageSender.sendMessage("rect/" + deviceId + "/ota", version, true);
                 deviceRepo.save(device);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -424,6 +537,14 @@ public class DeviceService {
             return res;
         }
         throw new IllegalAccessException("User does not have access to this device");
+    }
+
+    public static Object convertStringToFloat(String input) {
+        try {
+            return Float.parseFloat(input); // Try to convert to float
+        } catch (NumberFormatException e) {
+            return input; // If conversion fails, return the original string
+        }
     }
 
     String generateApiKey() {

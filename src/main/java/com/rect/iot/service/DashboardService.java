@@ -7,13 +7,13 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.rect.iot.model.Dashboard;
 import com.rect.iot.model.Datastream;
-import com.rect.iot.model.User;
+import com.rect.iot.model.dashboard.Dashboard;
+import com.rect.iot.model.dashboard.DashboardData;
+import com.rect.iot.model.dashboard.Widget;
 import com.rect.iot.model.device.Device;
 import com.rect.iot.model.device.DeviceMetadata;
-import com.rect.iot.model.widget.DashboardData;
-import com.rect.iot.model.widget.Widget;
+import com.rect.iot.model.user.User;
 import com.rect.iot.repository.DashboardDataRepo;
 import com.rect.iot.repository.DashboardRepo;
 import com.rect.iot.repository.DeviceMetadataRepo;
@@ -49,11 +49,30 @@ public class DashboardService {
     public Dashboard createDashboard(Dashboard newDashboard) {
         String userId = userService.getMyUserId();
         DashboardData data = DashboardData.builder()
-        .days("1")
+                .days("1")
                 .layout(new ArrayList<>())
                 .widgetData(new HashMap<String, Widget>())
                 .build();
-        DashboardData savedDashboardData = dashboardDataRepo.save(data);
+        DashboardData mobileData = DashboardData.builder()
+                .days("1")
+                .layout(new ArrayList<>())
+                .widgetData(new HashMap<String, Widget>())
+                .build();
+        DashboardData tabletData = DashboardData.builder()
+                .days("1")
+                .layout(new ArrayList<>())
+                .widgetData(new HashMap<String, Widget>())
+                .build();
+        DashboardData largeData = DashboardData.builder()
+                .days("1")
+                .layout(new ArrayList<>())
+                .widgetData(new HashMap<String, Widget>())
+                .build();
+
+        DashboardData dashboardData = dashboardDataRepo.save(data);
+        DashboardData mobileDashboardData = dashboardDataRepo.save(mobileData);
+        DashboardData tabletDashboardData = dashboardDataRepo.save(tabletData);
+        DashboardData largeDashboardData = dashboardDataRepo.save(largeData);
 
         Dashboard dashboard = new Dashboard();
 
@@ -61,17 +80,31 @@ public class DashboardService {
         dashboard.setAccess(newDashboard.getAccess());
         dashboard.setIsDeviceSpecific(false);
         dashboard.setAssociatedDevices(newDashboard.getAssociatedDevices());
-        dashboard.setDashboardDataId(savedDashboardData.getId());
+
+        dashboard.setDashboardDataId(dashboardData.getId());
+        dashboard.setMobileDashboardDataId(mobileDashboardData.getId());
+        dashboard.setTabletDashboardDataId(tabletDashboardData.getId());
+        dashboard.setLargeDashboardDataId(largeDashboardData.getId());
+
         dashboard.setOwner(userId);
         dashboard.setUserAccess(new HashMap<>());
         return dashboardRepo.save(dashboard);
     }
 
-    public Dashboard getDashboardData(String dashboardId) throws IllegalAccessException {
+    public Dashboard getDashboardData(String dashboardId, String type) throws IllegalAccessException {
         Dashboard dashboard = dashboardRepo.findById(dashboardId).get();
         String access = getAccessLevel(dashboard);
         if (dashboard.getAccess().equals("Public") || access.equals("Viewer") || access.equals("Editor") || access.equals("Owner")) {
-            dashboard.setDashboardData(dashboardDataRepo.findById(dashboard.getDashboardDataId()).get());
+            if (type.equals("Mobile: 600px")) {
+                dashboard.setDashboardData(dashboardDataRepo.findById(dashboard.getMobileDashboardDataId()).get());
+            } else if (type.equals("Tablet: 768px")) {
+                dashboard.setDashboardData(dashboardDataRepo.findById(dashboard.getTabletDashboardDataId()).get());
+            } else if (type.equals("Desktop: 1024px")) {
+                dashboard.setDashboardData(dashboardDataRepo.findById(dashboard.getDashboardDataId()).get());
+            } else if (type.equals("Large: 1440px")) {
+                dashboard.setDashboardData(dashboardDataRepo.findById(dashboard.getLargeDashboardDataId()).get());
+            }
+
             return dashboard;
         }
         throw new IllegalAccessException("User does not have access to this dashboard");
@@ -107,12 +140,23 @@ public class DashboardService {
         throw new IllegalAccessException("User does not have access to this dashboard");
     }
 
-    public DashboardData updateDashboardData(String dashboardId, DashboardData data) throws IllegalAccessException {
+    public DashboardData updateDashboardData(String dashboardId, DashboardData data, String type) throws IllegalAccessException {
         Dashboard dashboard = dashboardRepo.findById(dashboardId).get();
         String access = getAccessLevel(dashboard);
         if (access.equals("Viewer") || access.equals("Editor") || access.equals("Owner")) {
+        String dashboardDataId = "";
+            if (type.equals("Mobile: 600px")) {
+                dashboardDataId = dashboard.getMobileDashboardDataId();
+            } else if (type.equals("Tablet: 768px")) {
+                dashboardDataId = dashboard.getTabletDashboardDataId();
+            } else if (type.equals("Desktop: 1024px")) {
+                dashboardDataId = dashboard.getDashboardDataId();
+            } else if (type.equals("Large: 1440px")) {
+                dashboardDataId = dashboard.getLargeDashboardDataId();
+            }
+
             return dashboardDataRepo.save(DashboardData.builder()
-                    .id(dashboard.getDashboardDataId())
+                    .id(dashboardDataId)
                     .days(data.getDays())
                     .layout(data.getLayout())
                     .widgetData(data.getWidgetData())

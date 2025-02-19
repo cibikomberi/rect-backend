@@ -1,6 +1,6 @@
 package com.rect.iot.model.events;
 
-import com.rect.iot.model.ThingData;
+import com.rect.iot.model.thing.ThingData;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

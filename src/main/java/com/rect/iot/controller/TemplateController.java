@@ -21,11 +21,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.rect.iot.model.BuildErrors;
 import com.rect.iot.model.BuildJob;
 import com.rect.iot.model.Datastream;
 import com.rect.iot.model.Template;
 import com.rect.iot.model.VersionControl;
+import com.rect.iot.model.device.BuildErrors;
 import com.rect.iot.model.node.Flow;
 import com.rect.iot.model.template.TemplateMetadata;
 import com.rect.iot.service.TemplateService;

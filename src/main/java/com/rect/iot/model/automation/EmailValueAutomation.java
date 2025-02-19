@@ -1,19 +1,17 @@
-package com.rect.iot.model.widget;
+package com.rect.iot.model.automation;
+
+import com.rect.iot.model.Datastream;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Data
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class GaugeWidget extends Widget {
-    Integer min;
-    Integer max;
+public class EmailValueAutomation extends Automation {
+    private Datastream datastream;
+    private String[] emailList;
 }

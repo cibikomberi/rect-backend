@@ -7,6 +7,7 @@ import org.springframework.data.annotation.Transient;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.rect.iot.model.Datastream;
+import com.rect.iot.model.automation.Automation;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,6 +23,8 @@ public class DeviceMetadata {
     private String id;
 
     private List<Datastream> datastreams;
+    private List<Automation> automations;
+    
 
     @Transient
     private Map<String, String> userAccess;

@@ -1,6 +1,7 @@
 package com.rect.iot.controller;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.rect.iot.model.User;
+import com.rect.iot.model.user.AuthToken;
+import com.rect.iot.model.user.User;
 import com.rect.iot.service.UserService;
 
 
@@ -36,7 +38,7 @@ public class UserController {
 
     @PostMapping("/login")
     public Map<String, String> login(@RequestBody ObjectNode user) {
-        return userService.login(user.get("email").asText(), user.get("password").asText());
+        return userService.login(user.get("email").asText(), user.get("password").asText(), user.get("client").asText(), user.get("os").asText());
     }
     @PostMapping("/auth/refresh-token")
     public String refreshToken(@RequestBody ObjectNode json) {
@@ -46,9 +48,14 @@ public class UserController {
 
     @PostMapping("/login-vs")
     public Map<String, String> loginVScode(@RequestBody ObjectNode user) {
-        return userService.login(user.get("email").asText(), user.get("password").asText());
+        return userService.login(user.get("email").asText(), user.get("password").asText(), user.get("client").asText(), user.get("os").asText());
     }
 
+    @GetMapping("/user/sessions")
+    public List<AuthToken> getMySessions() {
+        return userService.getMySessions();
+    }
+    
     @GetMapping("/whoami")
     public User whoAmI() {
         return userService.whoAmI();

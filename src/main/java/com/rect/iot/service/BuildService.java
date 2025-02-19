@@ -11,11 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import com.rect.iot.controller.MqttEventListener;
-import com.rect.iot.model.BuildErrors;
 import com.rect.iot.model.BuildJob;
-import com.rect.iot.model.DeviceConstants;
+import com.rect.iot.model.device.BuildErrors;
 import com.rect.iot.model.device.Device;
+import com.rect.iot.model.device.DeviceConstants;
 import com.rect.iot.repository.BuildErrorRepo;
 import com.rect.iot.repository.BuildJobRepo;
 import com.rect.iot.repository.DeviceConstantsRepo;
@@ -29,13 +28,13 @@ public class BuildService {
     @Autowired
     private BuildJobRepo buildJobRepo;
     @Autowired
-    private MqttEventListener mqtt;
+    private MqttMessageSender mqttMessageSender;
 
     @Async
     public void buildProject(String templateId, Device device, String version, String enviroinment, boolean autoDeploy) {
         buildProject(templateId, device, version, enviroinment);
         if (autoDeploy) {
-            mqtt.sendMessage("rect/" + device.getId() + "/ota", version, true);
+            mqttMessageSender.sendMessage("rect/" + device.getId() + "/ota", version, true);
         }
     }
     private void buildProject(String templateId, Device device, String version, String enviroinment) {

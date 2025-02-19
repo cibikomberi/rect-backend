@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 import javax.naming.directory.InvalidAttributesException;
 
@@ -15,17 +15,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.rect.iot.controller.MqttEventListener;
-import com.rect.iot.model.BuildErrors;
 import com.rect.iot.model.BuildJob;
 import com.rect.iot.model.Datastream;
 import com.rect.iot.model.Image;
 import com.rect.iot.model.Template;
-import com.rect.iot.model.User;
 import com.rect.iot.model.VersionControl;
+import com.rect.iot.model.device.BuildErrors;
 import com.rect.iot.model.device.Device;
 import com.rect.iot.model.node.Flow;
 import com.rect.iot.model.template.TemplateMetadata;
+import com.rect.iot.model.user.User;
 import com.rect.iot.repository.BuildErrorRepo;
 import com.rect.iot.repository.BuildJobRepo;
 import com.rect.iot.repository.DeviceMetadataRepo;
@@ -55,7 +54,7 @@ public class TemplateService {
     private BuildService buildService;
     private BuildErrorRepo buildErrorRepo;
     private BuildJobRepo buildJobRepo;
-    private MqttEventListener mqtt;
+    private MqttMessageSender mqttMessageSender;
 
     public List<Template> getMyTemplates() {
         String userId = userService.getMyUserId();
@@ -82,6 +81,7 @@ public class TemplateService {
         Template template = templateRepo.findById(id).get();
         String access = getAccessLevel(template);
         if (access.equals("Viewer") || access.equals("Editor") || access.equals("Owner")) {
+            template.setMyAccess(access);
             return template;
         }
         throw new IllegalAccessException("User does not have access to this template");
@@ -367,7 +367,7 @@ public class TemplateService {
                 }
             }
             for (Entry<String, String> deviceEntry : buildJob.getDevices().entrySet()) {
-                mqtt.sendMessage("rect/" + deviceEntry.getKey() + "/ota", template.getBuildVersion(), true);
+                mqttMessageSender.sendMessage("rect/" + deviceEntry.getKey() + "/ota", template.getBuildVersion(), true);
             }
 
             template.setProductionVersion(template.getBuildVersion());

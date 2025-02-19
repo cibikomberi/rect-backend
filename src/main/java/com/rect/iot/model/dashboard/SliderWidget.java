@@ -1,4 +1,4 @@
-package com.rect.iot.model.widget;
+package com.rect.iot.model.dashboard;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,7 +13,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class CircularGaugeWidget extends Widget {
+public class SliderWidget extends Widget {
     Integer min;
     Integer max;
+    Integer step;
 }
