@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,15 +20,20 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.rect.iot.model.user.AuthToken;
 import com.rect.iot.model.user.User;
 import com.rect.iot.service.UserService;
+import com.rect.iot.utils.HttpUtils;
+
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import ua_parser.Client;
+import ua_parser.Parser;
 
 
 
-@RestController
 @CrossOrigin
+@RestController
+@RequiredArgsConstructor
 public class UserController {
-    @Autowired
-    private UserService userService;
-    
+    private final UserService userService;
 
     @PostMapping("/register")
     public User createUser(@RequestBody ObjectNode user) {
@@ -37,23 +41,35 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody ObjectNode user) {
-        return userService.login(user.get("email").asText(), user.get("password").asText(), user.get("client").asText(), user.get("os").asText());
+    public Map<String, String> login(@RequestBody ObjectNode user, HttpServletRequest req) {
+        String userAgent = req.getHeader("user-agent");
+
+        Parser uaParser = new Parser();
+        Client client = uaParser.parse(userAgent);
+        return userService.login(user.get("email").asText(), user.get("password").asText(), client, HttpUtils.getRequestIP(req));
     }
     @PostMapping("/auth/refresh-token")
     public String refreshToken(@RequestBody ObjectNode json) {
-        System.out.println("a");
         return userService.refreshToken(json.get("token").asText());
     }
 
     @PostMapping("/login-vs")
-    public Map<String, String> loginVScode(@RequestBody ObjectNode user) {
-        return userService.login(user.get("email").asText(), user.get("password").asText(), user.get("client").asText(), user.get("os").asText());
+    public Map<String, String> loginVScode(@RequestBody ObjectNode user, HttpServletRequest req) {
+        String userAgent = req.getHeader("user-agent");
+
+        Parser uaParser = new Parser();
+        Client client = uaParser.parse(userAgent);
+        return userService.login(user.get("email").asText(), user.get("password").asText(), client, HttpUtils.getRequestIP(req));
     }
 
     @GetMapping("/user/sessions")
     public List<AuthToken> getMySessions() {
         return userService.getMySessions();
+    }
+    
+    @PutMapping("/user/session-logout")
+    public String logoutSession(@RequestBody ObjectNode data) throws IllegalAccessException {
+        return userService.logoutSession(data.get("id").asText());
     }
     
     @GetMapping("/whoami")

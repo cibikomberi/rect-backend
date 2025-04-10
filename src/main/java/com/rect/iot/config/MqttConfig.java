@@ -1,6 +1,7 @@
 package com.rect.iot.config;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,11 +19,13 @@ import com.rect.iot.model.events.MqttMessageEvent;
 @Configuration
 public class MqttConfig {
 
-    private static final String BROKER_URL = "tcp://localhost:1883"; // Replace with your broker URL
+    @Value("${MQTT_BROKER_URL}")
+    private String BROKER_URL;
     private static final String CLIENT_ID = "spring-boot-mqtt-client";
 
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
+        System.out.println(BROKER_URL);
         DefaultMqttPahoClientFactory factory = new DefaultMqttPahoClientFactory();
         MqttConnectOptions options = new MqttConnectOptions();
         options.setServerURIs(new String[]{BROKER_URL});

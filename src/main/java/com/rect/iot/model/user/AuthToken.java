@@ -18,7 +18,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AuthToken {
 
-    @JsonIgnore
     private String id;
 
     @JsonIgnore
@@ -29,4 +28,5 @@ public class AuthToken {
     private LocalDateTime lastActiveTime;
     private String os;
     private String client;
+    private String location;
 }

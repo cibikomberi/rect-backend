@@ -9,11 +9,13 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.rect.iot.service.JWTService;
+import com.rect.iot.service.RectUserDetailsService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -45,13 +47,13 @@ public class JWTFilter extends OncePerRequestFilter{
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 Collection<? extends GrantedAuthority> authorities = jwtService.extractAuthorities(token);
 
-            // UserDetails userDetails = context.getBean(RectUserDetailsService.class).loadUserByUsername(username);
-            // if (jwtService.validateToken(token, userDetails)) {
+            UserDetails userDetails = context.getBean(RectUserDetailsService.class).loadUserByUsername(username);
+            if (jwtService.validateToken(token, userDetails)) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userId, null, authorities);
                 authToken.setDetails(new WebAuthenticationDetailsSource()
                         .buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-            // }
+            }
         }
 
         filterChain.doFilter(request, response);

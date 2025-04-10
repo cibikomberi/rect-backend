@@ -5,14 +5,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -38,22 +35,18 @@ import com.rect.iot.repository.DeviceRepo;
 import com.rect.iot.repository.ThingDataRepo;
 import com.rect.iot.repository.ThingLogRepo;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class ThingService {
-    @Autowired
-    private ThingDataRepo thingDataRepo;
-    @Autowired
-    private ThingLogRepo thingLogRepo;
-    @Autowired
-    private DeviceRepo deviceRepo;
-    @Autowired
-    private DeviceMetadataRepo deviceMetadataRepo;
-    @Autowired
-    private SimpMessagingTemplate messagingTemplate;
-    @Autowired
-    private MqttMessageSender mqttMessageSender;
-    @Autowired
-    private EmailSender emailSender;
+    private final ThingDataRepo thingDataRepo;
+    private final ThingLogRepo thingLogRepo;
+    private final DeviceRepo deviceRepo;
+    private final DeviceMetadataRepo deviceMetadataRepo;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final MqttMessageSender mqttMessageSender;
+    private final EmailSender emailSender;
 
     // public List<String> saveThingData(String deviceId, Map<String, ?> dataMap) {
     // return saveThingData(deviceId, dataMap, true);

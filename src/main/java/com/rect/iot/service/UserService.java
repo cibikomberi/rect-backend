@@ -1,13 +1,13 @@
 package com.rect.iot.service;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +19,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.maxmind.geoip2.DatabaseReader;
+import com.maxmind.geoip2.model.CityResponse;
 import com.rect.iot.model.Image;
 import com.rect.iot.model.user.AuthToken;
 import com.rect.iot.model.user.User;
@@ -27,18 +29,18 @@ import com.rect.iot.repository.AuthTokenRepo;
 import com.rect.iot.repository.ImageRepo;
 import com.rect.iot.repository.UserRepo;
 
+import lombok.RequiredArgsConstructor;
+import ua_parser.Client;
+
 @Service
+@RequiredArgsConstructor
 public class UserService {
-    @Autowired
-    private UserRepo userRepo;
-    @Autowired
-    private ImageRepo imageRepo;
-    @Autowired
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private JWTService jwtService;
-    @Autowired
-    private AuthTokenRepo authTokenRepo;
+    private final UserRepo userRepo;
+    private final ImageRepo imageRepo;
+    private final AuthenticationManager authenticationManager;
+    private final JWTService jwtService;
+    private final AuthTokenRepo authTokenRepo;
+    private final DatabaseReader reader;
 
     BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(10);
 
@@ -58,7 +60,7 @@ public class UserService {
         throw new DuplicateKeyException("User already exists");
     }
 
-    public Map<String, String> login(String email, String password, String client, String os) {
+    public Map<String, String> login(String email, String password, Client client, String ipAddress) {
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(email, password));
 
@@ -69,13 +71,25 @@ public class UserService {
             String authToken = jwtService.generateAuthToken(email, userId,
                     ((UserPrincipal) authentication.getPrincipal()).getRole());
 
+            String location;
+
+            try{
+                System.out.println(ipAddress);
+                InetAddress ip = InetAddress.getByName(ipAddress);
+                CityResponse response = reader.city(ip);
+                location = response.getCity().getName() + ", " + response.getMostSpecificSubdivision().getName() + ", " + response.getCountry().getName();
+            } catch (Exception e) {
+                location = "Unknown location";
+            }
+
             authTokenRepo.save(AuthToken.builder()
-                    .os(os)
-                    .client(client)
-                    .lastActiveTime(LocalDateTime.now())
-                    .token(authToken)
-                    .userId(userId)
-                    .build());
+                .os(client.os.family)
+                .client(client.userAgent.family)
+                .location(location)
+                .lastActiveTime(LocalDateTime.now())
+                .token(authToken)
+                .userId(userId)
+                .build());
 
             Map<String, String> tokens = new HashMap<>();
             tokens.put("jwt", jwt);
@@ -105,6 +119,17 @@ public class UserService {
         String userId = getMyUserId();
         List<AuthToken> authTokens = authTokenRepo.findByUserId(userId);
         return authTokens;
+    }
+    
+    public String logoutSession(String id) throws IllegalAccessException {
+        String userId = getMyUserId();
+        System.out.println(userId);
+        System.out.println(id);
+        AuthToken token = authTokenRepo.deleteByUserIdAndId(userId, id);
+        if (token != null) {
+            return "ok";
+        }
+        throw new IllegalAccessException("Unauthorised user");
     }
     
     public User whoAmI() {

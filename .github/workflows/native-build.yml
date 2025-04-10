@@ -1,0 +1,54 @@
+name: Build Native Image and Push to DockerHub
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Native Build & Push to DockerHub
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: cibikomberi/rect
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 21 with GraalVM
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+          distribution: 'graalvm'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up environment variables
+        run: |
+          set -a
+          if [ -f .env ]; then source .env; fi
+          set +a
+
+      - name: Build native image with Maven
+        run: ./mvnw -Pnative native:compile -DskipTests
+
+      - name: Create Dockerfile for native app
+        run: |
+          echo 'FROM scratch' > Dockerfile
+          echo 'COPY target/*-runner /app' >> Dockerfile
+          echo 'ENTRYPOINT ["/app"]' >> Dockerfile
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t $IMAGE_NAME:latest .
+          docker push $IMAGE_NAME:latest

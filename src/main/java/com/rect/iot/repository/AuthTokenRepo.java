@@ -11,4 +11,5 @@ import com.rect.iot.model.user.AuthToken;
 public interface AuthTokenRepo extends MongoRepository<AuthToken, String> {
     AuthToken findByToken(String token);
     List<AuthToken> findByUserId(String userId);
+    AuthToken deleteByUserIdAndId(String userId, String id);
 }

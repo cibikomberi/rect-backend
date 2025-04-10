@@ -1,7 +1,5 @@
 package com.rect.iot.service;
 
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -10,9 +8,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,17 +24,9 @@ import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JWTService {
-    private String secretKey = "Kygqrhqwn0W8E5j8vAyaq7KIza1WqzCjf2FgLbPepYg=";
+    @Value("${com.rect.iot.jwt-secret}")
+    private String secretKey;
 
-    public JWTService() {
-        // try {
-        //     KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
-        //     SecretKey key = keyGenerator.generateKey();
-        //     secretKey = Base64.getEncoder().encodeToString(key.getEncoded());
-        // } catch (NoSuchAlgorithmException e) {
-            
-        // }
-    }
     public String generateToken(String username, String id, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("id", id);
