@@ -1,13 +1,14 @@
 package com.rect.iot.config;
 
-import com.maxmind.geoip2.DatabaseReader;
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 
-import java.io.File;
-import java.io.IOException;
+import com.maxmind.geoip2.DatabaseReader;
 
 @Configuration
 public class MaxmindConfig {
@@ -17,14 +18,11 @@ public class MaxmindConfig {
 
     @Bean
     public DatabaseReader databaseReader() throws IOException {
-        try {
-            // Get the current working directory
-            String currentDir = new File(".").getAbsolutePath();
-            System.out.println("📂 Current Working Directory: " + currentDir);
-            System.out.println("GeoIP Database Location: " + geoLiteDatabase);
-            return new DatabaseReader.Builder(geoLiteDatabase.getFile()).build();
+        try (InputStream inputStream = geoLiteDatabase.getInputStream()) {
+            System.out.println("✅ Loading GeoIP database from classpath: " + geoLiteDatabase);
+            return new DatabaseReader.Builder(inputStream).build();
         } catch (IOException e) {
-            System.err.println("Error loading GeoIP database: " + e.getMessage());
+            System.err.println("❌ Error loading GeoIP database: " + e.getMessage());
             throw e;
         }
     }

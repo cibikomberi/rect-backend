@@ -1,0 +1,21 @@
+[
+    {
+        "name": "com.maxmind.db.Metadata",
+        "allDeclaredConstructors": true
+    },
+    {
+        "name": "io.jsonwebtoken.impl.DefaultJwtBuilder",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "io.jsonwebtoken.impl.crypto.DefaultSignerFactory",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    },
+    {
+        "name": "io.jsonwebtoken.impl.crypto.DefaultSignatureValidatorFactory",
+        "allDeclaredConstructors": true,
+        "allDeclaredMethods": true
+    }
+]

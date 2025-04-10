@@ -75,7 +75,7 @@ public class UserService {
 
             try{
                 System.out.println(ipAddress);
-                InetAddress ip = InetAddress.getByName(ipAddress);
+                InetAddress ip = InetAddress.getByName("152.58.249.13");
                 CityResponse response = reader.city(ip);
                 location = response.getCity().getName() + ", " + response.getMostSpecificSubdivision().getName() + ", " + response.getCountry().getName();
             } catch (Exception e) {

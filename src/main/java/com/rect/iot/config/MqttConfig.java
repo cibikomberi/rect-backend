@@ -21,7 +21,8 @@ public class MqttConfig {
 
     @Value("${MQTT_BROKER_URL}")
     private String BROKER_URL;
-    private static final String CLIENT_ID = "spring-boot-mqtt-client";
+    @Value("${MQTT_BROKER_URL}")
+    private String CLIENT_ID;
 
     @Bean
     public MqttPahoClientFactory mqttClientFactory() {
