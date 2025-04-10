@@ -6,8 +6,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.rect.iot.model.User;
-import com.rect.iot.model.UserPrincipal;
+import com.rect.iot.model.user.User;
+import com.rect.iot.model.user.UserPrincipal;
 import com.rect.iot.repository.UserRepo;
 
 
@@ -19,9 +19,7 @@ public class RectUserDetailsService implements UserDetailsService{
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        System.out.println("Username: " + username);
-        User user = userRepo.findByUsername(username);
-        System.out.println(user);
+        User user = userRepo.findByEmail(username);
         if(user == null) {
             throw new UsernameNotFoundException("User not found");
         }

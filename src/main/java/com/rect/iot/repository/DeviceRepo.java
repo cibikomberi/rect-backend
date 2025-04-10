@@ -1,11 +1,15 @@
 package com.rect.iot.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import com.rect.iot.model.device.Device;
 
 @Repository
-public interface DeviceRepo extends JpaRepository<Device, Long> {
-    
+public interface DeviceRepo extends MongoRepository<Device, String> {
+    List<Device> findByOwner(String owner);
+    List<Device> findByTemplateIdAndInheritTemplate(String templateId, Boolean inheritTemplate);
+    List<Device> findByTemplateIdAndIsDevDevice(String templateId, Boolean isDevDevice);
 }

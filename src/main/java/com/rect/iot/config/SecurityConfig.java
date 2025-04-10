@@ -28,16 +28,16 @@ public class SecurityConfig {
     
     @Bean
     SecurityFilterChain securityFilterChani(HttpSecurity http) throws Exception {
-        http.csrf(customizer -> customizer.disable())
+        http
+            .csrf(customizer -> customizer.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // .formLogin(Customizer.withDefaults())
             // .httpBasic(Customizer.withDefaults())
             .authorizeHttpRequests(request -> request
-                .requestMatchers("/login", "/register").permitAll()
+                .requestMatchers("/login", "/auth/refresh-token","/login-vs", "/register", "/websocket/**","/profile/image/**", "/thing/update/*", "/dashboard/data/*", "dashboard-data/*/*/*/*").permitAll()
                 .anyRequest().authenticated())
-            .oauth2Login(Customizer.withDefaults())
+            .cors(Customizer.withDefaults())
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
+ 
         return http.build();
     }
 

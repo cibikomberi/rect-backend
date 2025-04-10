@@ -1,15 +1,30 @@
 package com.rect.iot.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
-import com.rect.iot.model.ThingData;
+import com.rect.iot.model.thing.ThingData;
 
 @Repository
 public interface ThingDataRepo extends MongoRepository<ThingData<?>, String> {
-    List<ThingData<?>> findByDeviceIdAndDatastreamId(Long deviceId, String datastreamId);
+    List<ThingData<?>> findByDeviceIdAndDatastreamIdAndDateTimeAfter(String deviceId, String datastreamId, LocalDateTime time);
+    
+    List<ThingData<?>> deleteByDeviceIdAndDatastreamId(String deviceId, String datastreamId);
 
-    ThingData<?> findFirstByDeviceIdAndDatastreamIdOrderByDateTimeDesc(Long deviceId, String datastreamId);
+    ThingData<?> findFirstByDeviceIdAndDatastreamIdOrderByDateTimeDesc(String deviceId, String datastreamId);
+
+
+    @Aggregation(pipeline = {
+        "{ $match: { deviceId: ?0, datastreamId: { $in: ?1 } } }",
+        "{ $sort: { dateTime: -1 } }",
+        "{ $group: { _id: '$datastreamId', latestRecord: { $first: '$$ROOT' } } }",
+        "{ $replaceRoot: { newRoot: '$latestRecord' } }"
+    })
+    List<ThingData<?>> findLatestValuesForDatastreams(String deviceId, List<String> datastreamIds);
+
+
 }
