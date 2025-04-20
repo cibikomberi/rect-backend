@@ -28,7 +28,6 @@ public class CodeService {
             deleteFolder(new File(basePath));
             for (MultipartFile file : files) {
                 String filePath = basePath + file.getOriginalFilename();
-                System.out.println(filePath);
                 try {
                     File targetFile = new File(filePath);
                     targetFile.getParentFile().mkdirs(); // Create directories if they don't exist

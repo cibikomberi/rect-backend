@@ -29,7 +29,6 @@ import com.rect.iot.model.device.DeviceMetadata;
 import com.rect.iot.model.node.Flow;
 import com.rect.iot.model.template.Template;
 import com.rect.iot.model.template.VersionControl;
-import com.rect.iot.model.thing.ThingData;
 import com.rect.iot.model.user.User;
 import com.rect.iot.repository.DashboardDataRepo;
 import com.rect.iot.repository.DashboardRepo;
@@ -239,13 +238,10 @@ public class DeviceService {
                             && existingDatastreams.get(i).getType().equals(datastream.getType())) {
                         datastream.setDeviceId(deviceId);
                         existingDatastreams.set(i, datastream);
-                        System.out.println(deviceMetadataRepo.save(metadata));
+                        deviceMetadataRepo.save(metadata);
                         return datastream;
                     } else {
-                        List<ThingData<?>> deleted = thingDataRepo.deleteByDeviceIdAndDatastreamId(deviceId,
-                                datastreamId);
-                        System.out.println("deleted");
-                        System.out.println(deleted);
+                        thingDataRepo.deleteByDeviceIdAndDatastreamId(deviceId, datastreamId);
                         datastream.setDeviceId(deviceId);
                         existingDatastreams.set(i, datastream);
                         deviceMetadataRepo.save(metadata);
@@ -364,7 +360,6 @@ public class DeviceService {
                 if (existingAutomations.get(i).getName().equals(automation.getName())) {
                     if (existingAutomations.get(i) instanceof ScheduleAutomation) {
                         ScheduleAutomation existingScheduleAutomation = (ScheduleAutomation) existingAutomations.get(i);
-                        System.out.println(existingScheduleAutomation);
                         taskScheduler.cancelEvent(existingScheduleAutomation.getTaskId());
                     }
                     existingAutomations.remove(i);
@@ -373,7 +368,6 @@ public class DeviceService {
             if (automation instanceof ScheduleAutomation) {
                 ScheduleAutomation scheduleAutomation = (ScheduleAutomation) automation;
                 scheduleAutomation.setTaskId(taskScheduler.scheduleEvent(deviceId + automation.getName(), () -> scheduledAutomationHandler(deviceId, scheduleAutomation.getDatastream().getIdentifier(), convertStringToFloat(scheduleAutomation.getValue())), scheduleAutomation.getTime()));
-                System.out.println(scheduleAutomation.getTaskId());
             }
             existingAutomations.add(automation);
             deviceMetadataRepo.save(metadata);
@@ -407,7 +401,6 @@ public class DeviceService {
     }
 
     private void scheduledAutomationHandler(String deviceId, String datastreamId, Object value) {
-        System.out.println("Sche");
         HashMap<String, Object> payload = new HashMap<>();
         payload.put("id", datastreamId);
         payload.put("data", value);

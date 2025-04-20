@@ -36,7 +36,6 @@ public class BuildService {
         }
     }
     private void buildProject(String templateId, Device device, String version, String enviroinment) {
-        System.out.println("build started");
         // Path source = Paths.get(version, null)
         String tempWorkDir = System.getProperty("user.dir") + "/temp/build-area/" + device.getId() + "/" + version
                 + "/";
@@ -65,7 +64,6 @@ public class BuildService {
                     "UTF-8");
 
             String error = buildProject(tempWorkDir);
-            System.out.println(error);
             File buildFile = new File(tempWorkDir + ".pio/build/" + enviroinment + "/firmware.bin");
             if (buildFile.exists()) {
                 File renamedFile = new File(tempWorkDir + ".pio/build/" + enviroinment + "/" + device.getId() + ".bin");
@@ -77,7 +75,6 @@ public class BuildService {
                 }
                 FileUtils.moveFileToDirectory(renamedFile, new File(System.getProperty("user.dir") + "/uploads/"),
                         true);
-                System.out.println("Build ok");
 
                 updateBuildStatus(templateId, device.getId(), "Success", true);
             } else {

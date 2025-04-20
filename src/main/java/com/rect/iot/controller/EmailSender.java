@@ -10,8 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j
 @CrossOrigin
 @RestController
 @RequiredArgsConstructor
@@ -20,7 +21,6 @@ public class EmailSender {
 
     @GetMapping("/test")    
     public void send() {
-        System.out.println("mail");
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("rect.server.iot@gmail.com");
         message.setTo("cibikomberi@gmail.com");
@@ -39,14 +39,11 @@ public class EmailSender {
     
             String htmlContent = generateHtmlTemplate(deviceName, datastreamName, value);
             helper.setText(htmlContent, true); // true indicates the content is HTML
-            System.out.println("mailed");
         } catch (MessagingException e) {
-            System.out.println("not mailed");
+            log.error("Unable to send email", e);
         }
 
-
         javaMailSender.send(message);
-        System.out.println("HTML email sent successfully!");
     }
 
     private String generateHtmlTemplate(String deviceName, String datastreamName, String value) {

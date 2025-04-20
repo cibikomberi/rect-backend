@@ -26,7 +26,6 @@ public class JWTService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("id", id);
         claims.put("role", role);
-        System.out.println("s"+secretKey);
 
         return Jwts.builder()
             .claims()
@@ -43,7 +42,6 @@ public class JWTService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("id", id);
         claims.put("role", role);
-        System.out.println("s"+secretKey);
 
         return Jwts.builder()
             .claims()

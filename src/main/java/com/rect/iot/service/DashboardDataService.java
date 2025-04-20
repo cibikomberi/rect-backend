@@ -47,7 +47,6 @@ public class DashboardDataService {
             int days = Integer.parseInt(range);
             ArrayList<ChartDataDTO> chartData = new ArrayList<>();
             if (datastreamId.equals("rect-log")) {
-                System.out.println(LocalDateTime.now().minusDays(days));
                 return thingLogRepo.findByDeviceIdAndTimeAfter(deviceId, LocalDateTime.now().minusDays(days));
             }
                     List<ThingData<?>> a = thingDataRepo.findByDeviceIdAndDatastreamIdAndDateTimeAfter(deviceId, datastreamId, LocalDateTime.now().minusDays(days));
@@ -101,9 +100,7 @@ public class DashboardDataService {
                 a.put("type", "update");
                 a.put("data", ChartDataDTO.builder().value(savedData.getValue()).dateTime(savedData.getDateTime()).build());
                 messagingTemplate.convertAndSend("/topic/data/" + deviceId + "/" + datastreamId, a);
-                System.out.println("sent");
             }
-                            // return "ok";
         }
         return null;
     }

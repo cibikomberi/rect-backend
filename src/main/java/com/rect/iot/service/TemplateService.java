@@ -400,17 +400,13 @@ public class TemplateService {
 
     public Flow getFlow(String id) {
         Template template = templateRepo.findById(id).get();
-        System.out.println(template);
 
         if (template.getFlowId() == null) {
-            System.out.println("flow");
 
             return Flow.builder().edges(new ArrayList<>()).nodes(new ArrayList<>()).build();
             // return null;
         }
-        System.out.println(flowRepo.findAll());
         Flow flow = flowRepo.findById(template.getFlowId()).get();
-        System.out.println(flow);
         return flow;
     }
 

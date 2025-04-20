@@ -11,6 +11,9 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class DynamicTaskScheduler {
 
@@ -50,9 +53,9 @@ public class DynamicTaskScheduler {
         ScheduledFuture<?> scheduledFuture = scheduledTasks.remove(taskId);
         if (scheduledFuture != null) {
             scheduledFuture.cancel(false);
-            System.out.printf("Task '%s' has been canceled\n", taskId);
+            log.info("Task '%s' has been canceled\n", taskId);
         } else {
-            System.out.printf("Task '%s' not found\n", taskId);
+            log.info("Task '%s' not found\n", taskId);
         }
     }
 

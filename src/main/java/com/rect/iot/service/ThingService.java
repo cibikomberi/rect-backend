@@ -122,7 +122,6 @@ public class ThingService {
         // Device device = deviceRepo.findById(deviceId).get();
         List<ThingData<?>> data = thingDataRepo.findLatestValuesForDatastreams(deviceId, datastreams);
         for(ThingData<?> val: data) {
-            System.out.println(val);
             HashMap<String, Object> payload = new HashMap<>();
             payload.put("id", val.getDatastreamId());
             payload.put("data", val.getValue());
@@ -170,7 +169,6 @@ public class ThingService {
                 device.setCurrentVersion(version);
                 deviceRepo.save(device);
             }
-            System.out.println("up to date");
             return new ResponseEntity<>(HttpStatusCode.valueOf(304));
         }
         String filename = deviceId + ".bin";
@@ -186,9 +184,7 @@ public class ThingService {
         long l = resource.getContentAsByteArray().length;
 
         // isESPDeviceUpToDate = true;
-        // System.out.println("Is device up to date: " +
         // EspupdateApplication.isDeviceUpToDate);
-        System.out.println("ESP updating");
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
