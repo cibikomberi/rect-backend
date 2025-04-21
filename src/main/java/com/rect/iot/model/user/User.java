@@ -20,6 +20,7 @@ public class User {
     @Id
     private String id;
 
+    @Indexed
     private String name;
     private String role = "USER";
 
