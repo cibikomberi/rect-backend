@@ -127,7 +127,6 @@ public class DeviceController {
 
     @PostMapping("/device/constants/{deviceId}/{version}")
     public String saveDeviceConstants(@PathVariable String deviceId, @PathVariable String version , @RequestBody String data) throws IllegalAccessException {
-        System.out.println(data);
         return deviceService.saveDeviceConstants(deviceId, version, data);
     }
 

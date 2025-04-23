@@ -11,11 +11,15 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.rect.iot.filter.JWTFilter;
+import com.rect.iot.filter.RedirectUrlFilter;
 import com.rect.iot.service.RectUserDetailsService;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
@@ -24,13 +28,14 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
     private final RectUserDetailsService userDetailsService;
+    private final RedirectUrlFilter redirectUrlFilter;
     private final JWTFilter jwtFilter;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/login",
                                 "/login-vs",
@@ -44,7 +49,15 @@ public class SecurityConfig {
                                 "health")
                         .permitAll()
                         .anyRequest().authenticated())
-                .cors(Customizer.withDefaults())
+                        .exceptionHandling(e -> e.authenticationEntryPoint((_, response, _) -> {
+                            // Return 403 instead of redirecting
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"error\":\"Not authorized\"}");
+                        }))
+                        .cors(Customizer.withDefaults())
+                .oauth2Login(oauth -> oauth.defaultSuccessUrl("/oauth/success"))
+                .addFilterBefore(redirectUrlFilter, OAuth2AuthorizationRequestRedirectFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -1,4 +1,4 @@
-package com.rect.iot.config;
+package com.rect.iot.filter;
 
 import java.io.IOException;
 import java.util.Collection;
