@@ -48,6 +48,7 @@ public class UserService {
     BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(10);
 
     public User createUser(String name, String email, String password) {
+        email = email.toLowerCase().trim();
         User existingUser = userRepo.findByEmail(email);
         if (existingUser == null) {
             User user = new User();
@@ -64,6 +65,7 @@ public class UserService {
     }
 
     public Map<String, String> login(String email, String password, Client client, String ipAddress) {
+        email = email.toLowerCase().trim();
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(email, password));
 
