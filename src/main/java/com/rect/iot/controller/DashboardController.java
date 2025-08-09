@@ -31,6 +31,11 @@ public class DashboardController {
         return dashboardService.getMyDashboards();
     }
 
+    @GetMapping("/dashboards/stats")
+    public Integer getMyDashboardsStats() {
+        return dashboardService.getMyDashboardStats();
+    }
+
     @GetMapping("/dashboard/{id}")
     public Dashboard getDashboardInfo(@PathVariable String id) throws IllegalAccessException {
         return dashboardService.getDashboardInfo(id);

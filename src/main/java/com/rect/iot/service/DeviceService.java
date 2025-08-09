@@ -513,6 +513,11 @@ public class DeviceService {
         throw new IllegalAccessException("User does not have access to this device");
     }
 
+    public Object getStats() {
+        String userId = userService.getMyUserId();
+        return deviceRepo.getDeviceStats(userId);
+    }
+
     public Map<String, String> getDeviceConstantsVS(String deviceId) throws IllegalAccessException {
         Device device = deviceRepo.findById(deviceId).get();
         String access = getAccessLevel(device);

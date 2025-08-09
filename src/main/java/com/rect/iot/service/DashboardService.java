@@ -34,6 +34,11 @@ public class DashboardService {
         return dashboardRepo.findByOwner(userId).stream().filter(dashboard -> !dashboard.getIsDeviceSpecific()).toList();
     }
 
+    public  Integer getMyDashboardStats() {
+        String userId = userService.getMyUserId();
+        return dashboardRepo.countByOwner(userId);
+    }
+
     public Dashboard getDashboardInfo(String id) throws IllegalAccessException {
         Dashboard dashboard = dashboardRepo.findById(id).get();
         String access = getAccessLevel(dashboard);

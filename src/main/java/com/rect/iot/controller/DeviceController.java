@@ -140,6 +140,11 @@ public class DeviceController {
         return deviceService.getDeviceConstantsVS(deviceId);
     }
 
+    @GetMapping("/device/stats")
+    public Object getStats() {
+        return deviceService.getStats();
+    }
+
     @GetMapping("/friends")
     public List<User> getMyFriends(@RequestParam String param) {
         return deviceService.getFriends(param);

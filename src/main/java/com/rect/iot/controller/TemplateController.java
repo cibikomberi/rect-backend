@@ -42,6 +42,11 @@ public class TemplateController {
     public List<Template> getMyTemplates() {
         return templateService.getMyTemplates();
     }
+
+    @GetMapping("/templates/stats")
+    public Integer getMyTemplatesStats() {
+        return templateService.getTemplatesStats();
+    }
     
     @PostMapping("/template")
     public Template createTemplate( @RequestBody ObjectNode json) {

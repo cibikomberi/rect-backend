@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface DashboardRepo extends MongoRepository<Dashboard, String> {
     List<Dashboard> findByOwner(String owner);
+
+    Integer countByOwner(String owner);
 }

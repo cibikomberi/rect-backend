@@ -115,7 +115,7 @@ public class BuildService {
     }
 
     String buildProject(String dirString) throws IOException, InterruptedException {
-        String[] command = new String[] { "C:\\Users\\cibik\\.platformio\\penv\\Scripts\\platformio.exe", "run", "-s" };
+        String[] command = new String[] { "platformio", "run", "-s" };
         File dir = new File(dirString);
         Process process = Runtime.getRuntime().exec(command, null, dir);
         return processResults(process);

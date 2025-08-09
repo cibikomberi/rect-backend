@@ -61,6 +61,11 @@ public class TemplateService {
         return templateRepo.findByOwner(userId);
     }
 
+    public Integer getTemplatesStats() {
+        String userId = userService.getMyUserId();
+        return templateRepo.countByOwner(userId);
+    }
+
     public Template createTemplate(String name, String board) {
         String userId = userService.getMyUserId();
 

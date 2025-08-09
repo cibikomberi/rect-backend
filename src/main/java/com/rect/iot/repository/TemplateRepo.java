@@ -10,4 +10,6 @@ import java.util.List;
 @Repository
 public interface TemplateRepo extends MongoRepository<Template, String> {
     List<Template> findByOwner(String owner);
+
+    Integer countByOwner(String owner);
 }

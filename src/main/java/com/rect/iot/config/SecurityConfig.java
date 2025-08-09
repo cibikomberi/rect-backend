@@ -49,7 +49,7 @@ public class SecurityConfig {
                                 "health")
                         .permitAll()
                         .anyRequest().authenticated())
-                        .exceptionHandling(e -> e.authenticationEntryPoint((_, response, _) -> {
+                        .exceptionHandling(e -> e.authenticationEntryPoint((request, response, exception) -> {
                             // Return 403 instead of redirecting
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType("application/json");
