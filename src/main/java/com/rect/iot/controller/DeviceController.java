@@ -140,7 +140,7 @@ public class DeviceController {
         return deviceService.getDeviceConstantsVS(deviceId);
     }
 
-    @GetMapping("/device/stats")
+    @GetMapping("/devices/stats")
     public Object getStats() {
         return deviceService.getStats();
     }
